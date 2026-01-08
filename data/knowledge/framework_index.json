@@ -1,0 +1,210 @@
+{
+  "frameworks": {
+    "aida": {
+      "name": "AIDA",
+      "acronym": "Attention, Interest, Desire, Action",
+      "components": [
+        "Attention: Grab focus",
+        "Interest: Provide info",
+        "Desire: Build emotion",
+        "Action: CTA"
+      ],
+      "best_for": ["TOFU", "story-driven", "email newsletters"],
+      "emotional_tone": "positive, aspirational",
+      "funnel_stage": "TOFU",
+      "example": "Headline grabs attention → subheadline provides info → benefits build desire → CTA prompts action"
+    },
+    "pas": {
+      "name": "PAS",
+      "acronym": "Problem, Agitate, Solve",
+      "components": [
+        "Problem: Identify pain",
+        "Agitate: Amplify urgency",
+        "Solve: Present solution"
+      ],
+      "best_for": ["MOFU", "landing pages", "sales pages"],
+      "emotional_tone": "urgent, problem-aware",
+      "funnel_stage": "MOFU",
+      "example": "Problem: Can't increase CLV. Agitate: Loses revenue yearly. Solve: Implement this automation."
+    },
+    "fab": {
+      "name": "FAB",
+      "acronym": "Features, Advantages, Benefits",
+      "components": [
+        "Feature: What it is",
+        "Advantage: What it does",
+        "Benefit: How customer feels"
+      ],
+      "best_for": ["All stages", "solution descriptions"],
+      "emotional_tone": "customer-centric",
+      "funnel_stage": "MOFU-BOFU",
+      "example": "Feature: Automated workflows. Advantage: Saves 8 hours/week. Benefit: More time for strategy."
+    },
+    "bab": {
+      "name": "BAB",
+      "acronym": "Before, After, Bridge",
+      "components": [
+        "Before: Current frustration",
+        "After: Desired outcome",
+        "Bridge: The product"
+      ],
+      "best_for": ["MOFU", "social ads", "short copy"],
+      "emotional_tone": "transformational",
+      "funnel_stage": "MOFU",
+      "example": "Before: Overwhelmed with manual tasks. After: Calm, organized, strategic. Bridge: Use Da Vinci."
+    },
+    "4ps": {
+      "name": "4Ps",
+      "acronym": "Promise, Picture, Proof, Push",
+      "components": [
+        "Promise: The hook",
+        "Picture: Visualize",
+        "Proof: Credibility",
+        "Push: CTA"
+      ],
+      "best_for": ["BOFU", "sales letters", "high-value pages"],
+      "emotional_tone": "credible, aspirational",
+      "funnel_stage": "BOFU",
+      "example": "Promise: 3x conversions. Picture: Envision revenue growth. Proof: 100+ case studies. Push: Start free trial."
+    },
+    "hero": {
+      "name": "Hero Section",
+      "acronym": "Headline, Subheadline, CTA",
+      "components": [
+        "Headline: UVP",
+        "Subheadline: Context",
+        "Visuals: Connection",
+        "CTA: Action"
+      ],
+      "best_for": ["All landing pages", "above-the-fold"],
+      "emotional_tone": "immediate, benefit-focused",
+      "funnel_stage": "TOFU-MOFU",
+      "example": "Headline: 'Generate 10x Email Sequences in Hours'. Subheadline: 'AI-powered copywriting for DTC.' CTA: 'Start free.'"
+    }
+  },
+  "sequences": {
+    "first_purchase_dtc": {
+      "outcome": "First Purchase Acquisition",
+      "vertical": "DTC",
+      "duration": "7-14 days",
+      "touch_points": 5,
+      "cadence": "Every 2-3 days",
+      "frameworks": ["AIDA", "FAB"],
+      "key_messages": [
+        "Welcome & Value Prop",
+        "Social Proof",
+        "Objection Buster",
+        "Limited Offer"
+      ],
+      "branching_logic": "IF clicks CTA THEN exit; IF views product THEN browse abandonment"
+    },
+    "cart_abandonment": {
+      "outcome": "Cart Recovery",
+      "vertical": "DTC",
+      "duration": "48 hours",
+      "touch_points": 3,
+      "cadence": "1 hour, 12 hours, 24 hours",
+      "frameworks": ["PAS", "FAB"],
+      "key_messages": [
+        "Item reminder",
+        "Security reassurance",
+        "Final push with incentive"
+      ],
+      "branching_logic": "Hyper-urgent based on abandonment time"
+    },
+    "supplement_onboarding": {
+      "outcome": "Habit Formation",
+      "vertical": "Supplements",
+      "duration": "21 days",
+      "touch_points": 5,
+      "cadence": "Every 3-4 days",
+      "frameworks": ["AIDA", "4Ps"],
+      "key_messages": [
+        "Usage instructions",
+        "Scientific credibility",
+        "Testimonials",
+        "Results check-in"
+      ],
+      "branching_logic": "IF no usage check-in THEN proactive support trigger"
+    },
+    "coaching_lead_to_consultation": {
+      "outcome": "Consultation Booking",
+      "vertical": "Coaching",
+      "duration": "30-60 days",
+      "touch_points": 12,
+      "cadence": "Every 2-3 days",
+      "frameworks": ["PAS", "BAB", "4Ps"],
+      "key_messages": [
+        "Lead magnet delivery",
+        "Authority building",
+        "Case studies",
+        "Social proof",
+        "Pricing objection handling",
+        "Demo/consultation link"
+      ],
+      "branching_logic": "IF engages with content THEN accelerate; IF no engagement THEN re-engagement sequence"
+    },
+    "nonprofit_donor_escalation": {
+      "outcome": "Single to Recurring Donor",
+      "vertical": "Nonprofit",
+      "duration": "60 days",
+      "touch_points": 4,
+      "cadence": "Sparse (15, 30, 45 days)",
+      "frameworks": ["BAB", "4Ps"],
+      "key_messages": [
+        "Thank you & impact",
+        "Mission reinforcement",
+        "Recurring program ask",
+        "Donor impact case study"
+      ],
+      "branching_logic": "IF accepts recurring THEN VIP nurture; IF declines THEN wait 90 days"
+    }
+  },
+  "verticals": {
+    "dtc": {
+      "vertical_name": "Direct-to-Consumer",
+      "characteristics": [
+        "High visual appeal",
+        "Fast purchase cycles",
+        "Digital + physical touchpoints"
+      ],
+      "key_principles": [
+        "Trust building",
+        "Social proof focus",
+        "Abandoned cart urgency",
+        "Subscription retention"
+      ],
+      "unique_considerations": "Manage both digital (ads, email) and physical (packaging, CS) journeys. 41% open rate on abandonment emails."
+    },
+    "supplements": {
+      "vertical_name": "Nutritional Supplements",
+      "characteristics": [
+        "High skepticism",
+        "Subscription/recurring focus",
+        "Scientific credibility critical"
+      ],
+      "key_principles": [
+        "FDA compliance",
+        "Ingredient education",
+        "Habit formation (21 days)",
+        "Long-term relationship building"
+      ],
+      "unique_considerations": "Sequence must focus on successful product usage before upsell. Personalize by health concern."
+    },
+    "coaching": {
+      "vertical_name": "Online Coaching & Education",
+      "characteristics": [
+        "Long sales cycle (30-60+ days)",
+        "High-ticket pricing",
+        "Authority-driven"
+      ],
+      "key_principles": [
+        "Authority building",
+        "Transformation messaging",
+        "Extensive social proof",
+        "Objection handling"
+      ],
+      "unique_considerations": "12+ email sequences typical. Lead magnet is the critical entry point. Must address pricing objections extensively."
+    }
+  }
+}

@@ -1,0 +1,51 @@
+davinci-chatbot/                          Root (35 files total)
+├── README.md                              Main project readme
+├── Makefile                               Build/test/run
+├── go.mod                                 Dependencies
+├── go.sum                                 Lockfile
+├── .env.example                           GCP config template
+├── .gitignore                             Git ignores
+├── setup.sh                               Initial setup
+├── testapi.sh                             API testing
+├── cmd/
+│   └── api/
+│       └── main.go                        HTTP server entry
+├── internal/                              Core logic (25 files)
+│   ├── api/
+│   │   ├── handlers/
+│   │   │   ├── chat.go                    API endpoints
+│   │   │   └── middleware.go              CORS/logging
+│   │   └── routes.go                      Route setup
+│   ├── instruction/                       6-layer prompt composer
+│   │   ├── composer.go
+│   │   ├── baseprompt.go
+│   │   ├── workflowsteps.go
+│   │   └── verticals.go
+│   ├── orchestrator/
+│   │   ├── orchestrator.go                Main AI flow
+│   │   ├── types.go                       WorkflowStep enum
+│   │   └── contextbuilder.go              Stateless context
+│   ├── knowledge/                         Compressed KB
+│   │   ├── knowledgebase.go
+│   │   ├── frameworklookup.go
+│   │   └── sequencetemplates.go
+│   ├── validation/
+│   │   └── inputvalidator.go              Prompt injection
+│   ├── vertex/
+│   │   └── client.go                      Gemini 2.5 Flash client
+│   └── models/
+│       └── chatrequest.go
+├── data/
+│   └── knowledge/
+│       ├── frameworks.json                Copywriting frameworks
+│       ├── sequences.json                 Outcome mappings
+│       └── verticals.json                 DTC verticals
+└── docs/                                 Documentation (9 files)
+    ├── QUICKSTART.md
+    ├── INSTALLATIONSUMMARY.md
+    ├── PACKAGEOVERVIEW.md
+    ├── DIRECTORYTREE.txt                   (this file)
+    ├── FILESCREATED.md
+    ├── STARTHERE.md
+    ├── DOWNLOADANDRUN.md
+    └── README.md

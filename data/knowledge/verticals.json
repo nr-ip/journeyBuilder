@@ -1,0 +1,64 @@
+{
+  "verticals": {
+    "dtc": {
+      "verticalname": "Direct-to-Consumer",
+      "characteristics": [
+        "High visual appeal",
+        "Fast purchase cycles",
+        "Digital + physical touchpoints"
+      ],
+      "keyprinciples": [
+        "Trust building",
+        "Social proof focus",
+        "Abandoned cart urgency",
+        "Subscription retention"
+      ],
+      "uniqueconsiderations": "Manage both digital (ads, email) and physical (packaging, CS) journeys. 41% open rate on abandonment emails."
+    },
+    "supplements": {
+      "verticalname": "Nutritional Supplements",
+      "characteristics": [
+        "High skepticism",
+        "Subscription/recurring focus",
+        "Scientific credibility critical"
+      ],
+      "keyprinciples": [
+        "FDA compliance",
+        "Ingredient education",
+        "Habit formation (21 days)",
+        "Long-term relationship building"
+      ],
+      "uniqueconsiderations": "Sequence must focus on successful product usage before upsell. Personalize by health concern."
+    },
+    "coaching": {
+      "verticalname": "Online Coaching/Education",
+      "characteristics": [
+        "Long sales cycle (30-60 days)",
+        "High-ticket pricing",
+        "Authority-driven"
+      ],
+      "keyprinciples": [
+        "Authority building",
+        "Transformation messaging",
+        "Extensive social proof",
+        "Objection handling"
+      ],
+      "uniqueconsiderations": "12+ email sequences typical. Lead magnet is critical entry point. Must address pricing objections extensively."
+    },
+    "nonprofit": {
+      "verticalname": "Nonprofits/Politics",
+      "characteristics": [
+        "Mission-driven urgency",
+        "High-frequency triggers",
+        "Donor psychology"
+      ],
+      "keyprinciples": [
+        "Impact visualization",
+        "Recurring giving",
+        "Gratitude reinforcement",
+        "Urgency without manipulation"
+      ],
+      "uniqueconsiderations": "Sparse cadence works best. Focus on emotional connection over hard sells."
+    }
+  }
+}

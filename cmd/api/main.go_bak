@@ -1,0 +1,110 @@
+package main
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
+	"JourneyBuilder/internal/api/handlers"
+	"JourneyBuilder/internal/orchestrator"
+	"JourneyBuilder/internal/validation"
+	"JourneyBuilder/internal/vertex"
+)
+
+func mustGetEnv(key string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	log.Fatalf("Missing required env var: %s", key)
+	return ""
+}
+
+func loadEnv() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using OS environment variables")
+	}
+}
+
+func main() {
+	loadEnv()
+
+	// Configuration
+	projectID := mustGetEnv("GCP_PROJECT_ID")
+	region := os.Getenv("GCP_REGION")
+	if region == "" {
+		region = "us-central1"
+	}
+	model := os.Getenv("VERTEXAI_MODEL")
+	if model == "" {
+		model = "gemini-2.0-flash-exp"
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Starting Da Vinci Chatbot (Project: %s, Model: %s, Port: %s)", projectID, model, port)
+
+	ctx := context.Background()
+
+	// Initialize Vertex AI Client
+	vertexClient, err := vertex.NewVertexClient(projectID, region, model)
+	if err != nil {
+		log.Fatalf("Failed to initialize Vertex AI: %v", err)
+	}
+	defer vertexClient.Close()
+
+	// Initialize validation
+	inputValidator := validation.NewInputValidator()
+	outputValidator := validation.NewOutputValidator()
+
+	// Initialize orchestrator
+	orch := orchestrator.NewOrchestrator(vertexClient, inputValidator, outputValidator)
+
+	// Echo server
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000", "http://127.0.0.1:3000"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
+
+	// API Routes
+	api := e.Group("/api")
+	api.POST("/chat", handlers.ChatHandler(orch))
+	api.GET("/health", handlers.HealthCheck)
+
+	// Serve Vue SPA at root (embedded frontend)
+	e.File("/*", "public/index.html")
+	// Note: Echo's FileFS catches all routes first, API routes take precedence
+
+	// Graceful shutdown
+	go func() {
+		if err := e.Start(":" + port); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	log.Println("Da Vinci Chatbot stopped gracefully")
+}

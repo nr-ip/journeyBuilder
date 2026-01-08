@@ -1,0 +1,80 @@
+{
+  "sequences": {
+    "first_purchase_dtc": {
+      "outcome": "First Purchase Acquisition",
+      "vertical": "DTC",
+      "duration": "7-14 days",
+      "touchpoints": 5,
+      "cadence": "Every 2-3 days",
+      "frameworks": ["AIDA", "FAB"],
+      "keymessages": [
+        "Welcome + Value Prop",
+        "Social Proof",
+        "Objection Buster",
+        "Limited Offer"
+      ],
+      "branchinglogic": "IF clicks CTA THEN exit, IF views product THEN browse abandonment"
+    },
+    "cart_abandonment": {
+      "outcome": "Cart Recovery",
+      "vertical": "DTC",
+      "duration": "48 hours",
+      "touchpoints": 3,
+      "cadence": "1 hour, 12 hours, 24 hours",
+      "frameworks": ["PAS", "FAB"],
+      "keymessages": [
+        "Item reminder",
+        "Security reassurance",
+        "Final push with incentive"
+      ],
+      "branchinglogic": "Hyper-urgent based on abandonment time"
+    },
+    "supplement_onboarding": {
+      "outcome": "Habit Formation",
+      "vertical": "Supplements",
+      "duration": "21 days",
+      "touchpoints": 5,
+      "cadence": "Every 3-4 days",
+      "frameworks": ["AIDA", "4Ps"],
+      "keymessages": [
+        "Usage instructions",
+        "Scientific credibility",
+        "Testimonials",
+        "Results check-in"
+      ],
+      "branchinglogic": "IF no usage check-in THEN proactive support trigger"
+    },
+    "coaching_lead_to_consultation": {
+      "outcome": "Consultation Booking",
+      "vertical": "Coaching",
+      "duration": "30-60 days",
+      "touchpoints": 12,
+      "cadence": "Every 2-3 days",
+      "frameworks": ["PAS", "BAB", "4Ps"],
+      "keymessages": [
+        "Lead magnet delivery",
+        "Authority building",
+        "Case studies",
+        "Social proof",
+        "Pricing objection handling",
+        "Demo/consultation link"
+      ],
+      "branchinglogic": "IF engages with content THEN accelerate, IF no engagement THEN re-engagement sequence"
+    },
+    "nonprofit_donor_escalation": {
+      "outcome": "Single to Recurring Donor",
+      "vertical": "Nonprofit",
+      "duration": "60 days",
+      "touchpoints": 4,
+      "cadence": "Sparse: 15, 30, 45 days",
+      "frameworks": ["BAB", "4Ps"],
+      "keymessages": [
+        "Thank you + impact",
+        "Mission reinforcement",
+        "Recurring program ask",
+        "Donor impact case study"
+      ],
+      "branchinglogic": "IF accepts recurring THEN VIP nurture, IF declines THEN wait 90 days"
+    }
+  }
+}

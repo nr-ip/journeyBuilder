@@ -1,0 +1,58 @@
+{
+  "frameworks": {
+    "aida": {
+      "name": "AIDA",
+      "acronym": "Attention, Interest, Desire, Action",
+      "components": "Attention: Grab focus, Interest: Provide info, Desire: Build emotion, Action: CTA",
+      "bestfor": "TOFU, story-driven content, email newsletters",
+      "emotionaltone": "positive, aspirational",
+      "funnelstage": "TOFU",
+      "example": "Headline grabs attention, subheadline provides info, benefits build desire, CTA prompts action"
+    },
+    "pas": {
+      "name": "PAS",
+      "acronym": "Problem, Agitate, Solve",
+      "components": "Problem: Identify pain, Agitate: Amplify urgency, Solve: Present solution",
+      "bestfor": "MOFU, landing pages, sales pages",
+      "emotionaltone": "urgent, problem-aware",
+      "funnelstage": "MOFU",
+      "example": "Problem: Can't increase CLV. Agitate: Loses revenue yearly. Solve: Implement this automation."
+    },
+    "fab": {
+      "name": "FAB",
+      "acronym": "Features, Advantages, Benefits",
+      "components": "Feature: What it is, Advantage: What it does, Benefit: How customer feels",
+      "bestfor": "All stages, solution descriptions",
+      "emotionaltone": "customer-centric",
+      "funnelstage": "MOFU-BOFU",
+      "example": "Feature: Automated workflows. Advantage: Saves 8 hours/week. Benefit: More time for strategy."
+    },
+    "bab": {
+      "name": "BAB",
+      "acronym": "Before, After, Bridge",
+      "components": "Before: Current frustration, After: Desired outcome, Bridge: The product",
+      "bestfor": "MOFU, social ads, short copy",
+      "emotionaltone": "transformational",
+      "funnelstage": "MOFU",
+      "example": "Before: Overwhelmed with manual tasks. After: Calm, organized, strategic. Bridge: Use Da Vinci."
+    },
+    "4ps": {
+      "name": "4Ps",
+      "acronym": "Promise, Picture, Proof, Push",
+      "components": "Promise: The hook, Picture: Visualize, Proof: Credibility, Push: CTA",
+      "bestfor": "BOFU, sales letters, high-value pages",
+      "emotionaltone": "credible, aspirational",
+      "funnelstage": "BOFU",
+      "example": "Promise: 3x conversions. Picture: Envision revenue growth. Proof: 100+ case studies. Push: Start free trial."
+    },
+    "hero": {
+      "name": "Hero Section",
+      "acronym": "Headline, Subheadline, CTA",
+      "components": "Headline: UVP, Subheadline: Context, Visuals: Connection, CTA: Action",
+      "bestfor": "All landing pages, above-the-fold",
+      "emotionaltone": "immediate, benefit-focused",
+      "funnelstage": "TOFU-MOFU",
+      "example": "Headline: Generate 10x Email Sequences in Hours. Subheadline: AI-powered copywriting for DTC. CTA: Start free."
+    }
+  }
+}
