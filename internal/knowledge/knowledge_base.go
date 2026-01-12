@@ -117,16 +117,25 @@ func (kb *KnowledgeBase) GetVerticalGuidance(vertical string) VerticalGuidance {
 func (kb *KnowledgeBase) ExtractRelevantContext(outcome, vertical, currentStep string) string {
 	var sb strings.Builder
 
-	// Add relevant frameworks
-	sb.WriteString("## APPLICABLE COPYWRITING FRAMEWORKS\n\n")
+	// Add relevant frameworks (only at StepExecution when actually generating sequence)
 	recommendedFrameworks := kb.getFrameworksForStep(currentStep)
-	for _, fw := range recommendedFrameworks {
-		if framework := kb.GetFramework(fw); framework != nil {
-			sb.WriteString(fmt.Sprintf("**%s (%s):** %s\n",
-				framework.Name,
-				framework.Acronym,
-				framework.BestFor[0]))
+	if len(recommendedFrameworks) > 0 {
+		sb.WriteString("## APPLICABLE COPYWRITING FRAMEWORKS\n\n")
+		for _, fw := range recommendedFrameworks {
+			if framework := kb.GetFramework(fw); framework != nil {
+				sb.WriteString(fmt.Sprintf("**%s (%s):** %s\n",
+					framework.Name,
+					framework.Acronym,
+					framework.BestFor[0]))
+				if framework.EmotionalTone != "" {
+					sb.WriteString(fmt.Sprintf("**Tone:** %s\n", framework.EmotionalTone))
+				}
+				if len(framework.Components) > 0 {
+					sb.WriteString(fmt.Sprintf("**Components:** %s\n", strings.Join(framework.Components, ", ")))
+				}
+			}
 		}
+		sb.WriteString("\n")
 	}
 
 	// Add sequence template if available
@@ -156,19 +165,19 @@ func (kb *KnowledgeBase) ExtractRelevantContext(outcome, vertical, currentStep s
 // getFrameworksForStep returns recommended frameworks for a workflow step
 func (kb *KnowledgeBase) getFrameworksForStep(step string) []string {
 	frameworkMap := map[string][]string{
-		"StepDiscovery":            {"AIDA"},
-		"StepValidation":           {"AIDA", "FAB"},
-		"StepFrameworkApplication": {"AIDA"},
-		"StepCircleConfirmation":   {"PAS", "BAB"},
-		"StepGoalSetting":          {"PAS"},
-		"StepAnalysis":             {"4Ps", "BAB"},
-		"StepExecution":            {"4Ps", "FAB"},
+		"StepDiscovery":            {},             // No frameworks needed - just asking for USP/ICP
+		"StepValidation":           {},             // No frameworks needed - just validating understanding
+		"StepFrameworkApplication": {},             // No frameworks needed - just asking about Circles of Trust
+		"StepCircleConfirmation":   {},             // No frameworks needed - just confirming Circle
+		"StepGoalSetting":          {},             // No frameworks needed - just asking for outcome
+		"StepAnalysis":             {},             // No frameworks needed - just analyzing appropriateness
+		"StepExecution":            {"4Ps", "FAB"}, // Only inject frameworks when actually generating sequence
 	}
 
 	if frameworks, found := frameworkMap[step]; found {
 		return frameworks
 	}
-	return []string{"AIDA"}
+	return []string{} // Default to empty - frameworks only needed at execution
 }
 
 func loadJSON(path string, target interface{}) error {

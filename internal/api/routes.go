@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -8,31 +9,33 @@ import (
 	"JourneyBuilder/internal/api/handlers"
 	"JourneyBuilder/internal/orchestrator"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gorilla/mux"
 )
 
 // SetupRoutes configures all API routes.
-func SetupRoutes(e *echo.Echo, orch *orchestrator.Orchestrator) {
+func SetupRoutes(router *mux.Router, orch *orchestrator.Orchestrator) {
 	// API group
-	api := e.Group("/api/v1")
+	api := router.PathPrefix("/api/v1").Subrouter()
 
 	// Chat endpoints
 	chatHandler := handlers.NewChatHandler(orch)
-	api.POST("/chat", chatHandler.Chat)
-	api.POST("/chat/stream", chatHandler.ChatStream)
+	api.HandleFunc("/chat", chatHandler.Chat).Methods("POST", "OPTIONS")
+	api.HandleFunc("/chat/stream", chatHandler.ChatStream).Methods("POST", "OPTIONS")
 
 	// Health check
-	api.GET("/health", healthCheck)
-	api.GET("/status", statusCheck)
+	api.HandleFunc("/health", healthCheck).Methods("GET")
+	api.HandleFunc("/status", statusCheck).Methods("GET")
 
 	// Knowledge base endpoints (admin/debug)
-	api.GET("/frameworks", listFrameworks)
-	api.GET("/sequences/:vertical", listSequences)
+	api.HandleFunc("/frameworks", listFrameworks).Methods("GET")
+	api.HandleFunc("/sequences/{vertical}", listSequences).Methods("GET")
 }
 
 // Health check endpoint.
-func healthCheck(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
 		"status":  "ok",
 		"service": "davinci-chatbot",
 		"version": "1.0.0",
@@ -40,8 +43,10 @@ func healthCheck(c echo.Context) error {
 }
 
 // Status endpoint with orchestrator health.
-func statusCheck(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]interface{}{
+func statusCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":     "healthy",
 		"service":    "davinci-chatbot",
 		"version":    "1.0.0",
@@ -54,12 +59,14 @@ func statusCheck(c echo.Context) error {
 }
 
 // Lists available copywriting frameworks (AIDA, PAS, FAB, BAB, 4Ps, Hero)
-func listFrameworks(c echo.Context) error {
+func listFrameworks(w http.ResponseWriter, r *http.Request) {
 	frameworks := []string{
 		"AIDA", "PAS", "FAB", "BAB", "4Ps", "Hero",
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"frameworks":  frameworks,
 		"count":       len(frameworks),
 		"description": "Available copywriting frameworks for email sequences",
@@ -67,8 +74,9 @@ func listFrameworks(c echo.Context) error {
 }
 
 // Lists sequences for specific vertical (supplements, coaching, etc.)
-func listSequences(c echo.Context) error {
-	vertical := c.Param("vertical")
+func listSequences(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	vertical := vars["vertical"]
 
 	sequences := map[string]string{
 		"first_purchase":   "5 emails over 7-14 days",
@@ -77,7 +85,9 @@ func listSequences(c echo.Context) error {
 		"churn_prevention": "4 emails over 30 days",
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"vertical":  vertical,
 		"sequences": sequences,
 		"count":     len(sequences),

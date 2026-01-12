@@ -3,6 +3,7 @@ package main
 import (
 	"JourneyBuilder/internal/api/handlers"
 	"JourneyBuilder/internal/knowledge"
+	"JourneyBuilder/internal/logger"
 	"JourneyBuilder/internal/orchestrator"
 	"JourneyBuilder/internal/services"
 	"JourneyBuilder/internal/validation"
@@ -27,8 +28,21 @@ func main() {
 		log.Println("✓ Loaded .env file")
 	}
 
+	// Initialize logger (file + console logging)
+	if err := logger.InitLogger(); err != nil {
+		log.Printf("Warning: Failed to initialize logger: %v. Continuing with console logging only.", err)
+	} else {
+		logFile := os.Getenv("LOG_FILE")
+		if logFile != "" {
+			log.Printf("✓ Logging to file: %s", logFile)
+		} else {
+			log.Println("ℹ️  Logging to console only (set LOG_FILE env var to enable file logging)")
+		}
+	}
+	defer logger.Close()
+
 	// Verify required environment variables
-	checkRequiredEnvVars()
+	//checkRequiredEnvVars()  // check TODO in function definition
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -61,14 +75,24 @@ func main() {
 	setupGracefulShutdown(geminiService)
 
 	router := mux.NewRouter()
+
+	// Health check endpoint
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","service":"journey-builder"}`))
+	}).Methods("GET")
+
+	// API routes
 	router.HandleFunc("/api/chat", handlers.HandleChat).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/generate-journey", handlers.HandleGenerateJourney).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/preview-journey", handlers.HandlePreviewJourney).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/update-delays", handlers.HandleUpdateDelays).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/confirm-journey", handlers.HandleConfirmJourney).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/generate-step", handlers.HandleGenerateStep).Methods("POST", "OPTIONS")
-	// router.HandleFunc("/health", handlers.HandleHealth).Methods("GET")
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
+
+	// Serve static files from public directory (must be last to catch all other routes)
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -86,48 +110,49 @@ func main() {
 	}
 }
 
+// TODO: Will optimize this later. Probably moved to gemini.go
 // checkRequiredEnvVars verifies that required environment variables are set
-func checkRequiredEnvVars() {
-	required := []string{"GEMINI_API_KEY"}
-	missing := []string{}
+// func checkRequiredEnvVars() {
+// 	required := []string{"GCP_PROJECT_ID", "GCP_REGION", "GEMINI_MODEL"}
+// 	missing := []string{}
 
-	for _, key := range required {
-		value := os.Getenv(key)
-		if value == "" {
-			missing = append(missing, key)
-		} else {
-			// Mask the value for security (show first 4 chars)
-			masked := value
-			if len(value) > 4 {
-				masked = value[:4] + "..."
-			}
-			log.Printf("✓ Found %s: %s", key, masked)
-		}
-	}
+// 	for _, key := range required {
+// 		value := os.Getenv(key)
+// 		if value == "" {
+// 			missing = append(missing, key)
+// 		} else {
+// 			// Mask the value for security (show first 4 chars)
+// 			masked := value
+// 			if len(value) > 4 {
+// 				masked = value[:4] + "..."
+// 			}
+// 			log.Printf("✓ Found %s: %s", key, masked)
+// 		}
+// 	}
 
-	if len(missing) > 0 {
-		log.Printf("⚠️  Missing required environment variables: %v", missing)
-		log.Println("   Set them in your .env file or system environment:")
-		for _, key := range missing {
-			log.Printf("   export %s=your_value_here", key)
-		}
-	}
+// 	if len(missing) > 0 {
+// 		log.Printf("⚠️  Missing required environment variables: %v", missing)
+// 		log.Println("   Set them in your .env file or system environment:")
+// 		for _, key := range missing {
+// 			log.Printf("   export %s=your_value_here", key)
+// 		}
+// 	}
 
-	// Check optional variables
-	optional := map[string]string{
-		"GEMINI_MODEL":                   "gemini-2.5-flash (default)",
-		"GOOGLE_APPLICATION_CREDENTIALS": "not set (optional, for Vertex AI)",
-	}
+// 	// Check optional variables
+// 	optional := map[string]string{
+// 		"GEMINI_MODEL":                   "gemini-2.5-flash (default)",
+// 		"GOOGLE_APPLICATION_CREDENTIALS": "not set (optional, for Vertex AI)",
+// 	}
 
-	for key, defaultValue := range optional {
-		value := os.Getenv(key)
-		if value == "" {
-			log.Printf("ℹ️  %s: %s", key, defaultValue)
-		} else {
-			log.Printf("✓ Found %s: %s", key, value)
-		}
-	}
-}
+// 	for key, defaultValue := range optional {
+// 		value := os.Getenv(key)
+// 		if value == "" {
+// 			log.Printf("ℹ️  %s: %s", key, defaultValue)
+// 		} else {
+// 			log.Printf("✓ Found %s: %s", key, value)
+// 		}
+// 	}
+// }
 
 func setupGracefulShutdown(geminiService *services.GeminiService) {
 	c := make(chan os.Signal, 1)

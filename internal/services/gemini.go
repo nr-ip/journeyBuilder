@@ -3,8 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"strings"
+	"time"
 
+	"github.com/joho/godotenv"
 	"google.golang.org/genai"
 )
 
@@ -36,29 +40,36 @@ type Response struct {
 }
 
 func NewGeminiService() (*GeminiService, error) {
-	// Try GEMINI_API_KEY first (for direct API access)
-	apiKey := os.Getenv("GEMINI_API_KEY")
 
-	// If not set, check if GOOGLE_APPLICATION_CREDENTIALS is set (for Vertex AI)
-	if apiKey == "" {
-		credsPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-		if credsPath != "" {
-			return nil, fmt.Errorf("GOOGLE_APPLICATION_CREDENTIALS is set but GEMINI_API_KEY is required for genai client. Please set GEMINI_API_KEY environment variable")
-		}
-		return nil, fmt.Errorf("GEMINI_API_KEY environment variable not set. Please set it in your .env file or export it: export GEMINI_API_KEY=your_api_key")
+	if err := godotenv.Load(); err != nil {
+		log.Println("Info: .env file not found, using system environment variables")
+	} else {
+		log.Println("✓ Loaded .env file")
 	}
-
-	ctx := context.Background()
-	client, err := genai.NewClient(ctx, &genai.ClientConfig{
-		APIKey: apiKey,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
+	projectID := os.Getenv("GCP_PROJECT_ID")
+	if projectID == "" {
+		return nil, fmt.Errorf("GCP_PROJECT_ID is not set")
+	}
+	location := os.Getenv("GCP_REGION")
+	if location == "" {
+		location = "us-central1"
 	}
 	model := os.Getenv("GEMINI_MODEL")
 	if model == "" {
 		model = "gemini-2.5-flash"
 	}
+
+	ctx := context.Background()
+
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		Project:  projectID,
+		Location: location,
+		Backend:  genai.BackendVertexAI,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
+	}
+	log.Println("✓ Gemini client created")
 
 	return &GeminiService{
 		client: client,
@@ -94,8 +105,17 @@ func (c *GeminiService) SendRequest(ctx context.Context, req *RequestBuilder) (*
 
 	// Add conversation history
 	for _, msg := range req.ConversationHistory {
+		// Convert "ai" role to "model" as required by Gemini API
+		role := msg.Role
+		if role == "ai" || role == "assistant" {
+			role = "model"
+		}
+		// Ensure role is either "user" or "model"
+		if role != "user" && role != "model" {
+			role = "user" // Default to "user" if invalid
+		}
 		contents = append(contents, &genai.Content{
-			Role:  msg.Role,
+			Role:  role,
 			Parts: []*genai.Part{{Text: msg.Content}},
 		})
 	}
@@ -115,10 +135,40 @@ func (c *GeminiService) SendRequest(ctx context.Context, req *RequestBuilder) (*
 		config.MaxOutputTokens = m
 	}
 
-	// Generate content
-	resp, err := c.client.Models.GenerateContent(ctx, c.model, contents, config)
+	// Generate content with retry logic for transient errors
+	var resp *genai.GenerateContentResponse
+	var err error
+	maxRetries := 3
+	retryDelay := time.Second
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		resp, err = c.client.Models.GenerateContent(ctx, c.model, contents, config)
+		if err == nil {
+			break
+		}
+
+		// Check if it's a retryable error (503, 429, or temporary errors)
+		errStr := strings.ToLower(err.Error())
+		isRetryable := false
+		if errStr != "" {
+			// Check for common retryable error patterns
+			if strings.Contains(errStr, "503") || strings.Contains(errStr, "overloaded") ||
+				strings.Contains(errStr, "429") || strings.Contains(errStr, "rate limit") ||
+				strings.Contains(errStr, "unavailable") || strings.Contains(errStr, "resource_exhausted") {
+				isRetryable = true
+			}
+		}
+
+		if !isRetryable || attempt == maxRetries-1 {
+			return &Response{Error: fmt.Sprintf("Failed to generate the content: %v", err)}, err
+		}
+
+		// Wait before retrying with exponential backoff
+		time.Sleep(retryDelay * time.Duration(attempt+1))
+	}
+
 	if err != nil {
-		return &Response{Error: fmt.Sprintf("Failed to generate the content: %v", err)}, err
+		return &Response{Error: fmt.Sprintf("Failed to generate the content after %d attempts: %v", maxRetries, err)}, err
 	}
 
 	// Extract text from response

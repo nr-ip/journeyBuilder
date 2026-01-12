@@ -71,7 +71,7 @@ func (o *Orchestrator) ProcessChatRequest(
 			Type:             "text",
 			IncludeTable:     shouldIncludeTable(currentStep),
 			TableColumns:     []string{"Email #", "Subject Line", "Day Delay"},
-			MaxEmailLength:   220,
+			MaxEmailLength:   750,
 			ReadabilityLevel: "Grade6",
 		},
 	}

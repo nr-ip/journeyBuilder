@@ -1,82 +1,141 @@
 package handlers
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"log"
+	"net/http"
 	"time"
-
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"go.uber.org/zap"
 )
 
-// Middleware provides Echo middleware for the Da Vinci API.
+// Middleware provides HTTP middleware for the Da Vinci API.
 type Middleware struct {
-	logger *zap.SugaredLogger
+	logger Logger
+}
+
+// Logger interface for logging (allows using zap or standard log)
+type Logger interface {
+	Infof(format string, args ...interface{})
+}
+
+// StandardLogger wraps standard log package to implement Logger interface
+type StandardLogger struct{}
+
+func (l *StandardLogger) Infof(format string, args ...interface{}) {
+	log.Printf(format, args...)
 }
 
 // NewMiddleware creates middleware with logger.
-func NewMiddleware(logger *zap.SugaredLogger) *Middleware {
+// If logger is nil, uses standard log package.
+func NewMiddleware(logger Logger) *Middleware {
+	if logger == nil {
+		logger = &StandardLogger{}
+	}
 	return &Middleware{logger: logger}
 }
 
 // RequestLogger logs request details.
-func (m *Middleware) RequestLogger() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+func (m *Middleware) RequestLogger() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			reqID := uuid.New().String()[:8]
-			c.Set("requestID", reqID)
+			// Generate a simple request ID (8 characters)
+			reqIDBytes := make([]byte, 4)
+			if _, err := rand.Read(reqIDBytes); err != nil {
+				// Fallback to timestamp-based ID if crypto/rand fails
+				reqIDBytes = []byte{byte(time.Now().UnixNano() & 0xFF), byte((time.Now().UnixNano() >> 8) & 0xFF), byte((time.Now().UnixNano() >> 16) & 0xFF), byte((time.Now().UnixNano() >> 24) & 0xFF)}
+			}
+			reqID := hex.EncodeToString(reqIDBytes)
+
+			// Store request ID in context
+			ctx := context.WithValue(r.Context(), "requestID", reqID)
+			r = r.WithContext(ctx)
+
+			// Get client IP
+			clientIP := r.RemoteAddr
+			if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+				clientIP = forwarded
+			} else if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
+				clientIP = realIP
+			}
 
 			// Log request
 			m.logger.Infof(
 				"%s %s uid=%s from=%s",
-				c.Request().Method,
-				c.Request().URL.Path,
+				r.Method,
+				r.URL.Path,
 				reqID,
-				c.RealIP(),
+				clientIP,
 			)
 
-			defer func() {
+			// Create a response writer wrapper to capture status code
+			rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+			// Call next handler
+			next.ServeHTTP(rw, r)
+
+			// Log response
 				duration := time.Since(start)
-				status := c.Response().Status
 				m.logger.Infof(
 					"%s %s uid=%s status=%d latency=%v",
-					c.Request().Method,
-					c.Request().URL.Path,
+				r.Method,
+				r.URL.Path,
 					reqID,
-					status,
+				rw.statusCode,
 					duration,
 				)
-			}()
-
-			return next(c)
-		}
+		})
 	}
 }
 
+// responseWriter wraps http.ResponseWriter to capture status code
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
 // CORSMiddleware enables CORS for SPA frontend.
-func (m *Middleware) CORSMiddleware() echo.MiddlewareFunc {
-	return middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3000", "http://127.0.0.1:3000", "*"},
-		AllowMethods: []string{echo.GET, echo.POST, echo.OPTIONS},
-		AllowHeaders: []string{
-			echo.HeaderOrigin,
-			echo.HeaderContentType,
-			echo.HeaderAccept,
-			echo.HeaderAuthorization,
-		},
-		ExposeHeaders: []string{"X-Request-ID"},
-		MaxAge:        86400,
-	})
+// Note: CORS is typically handled by github.com/rs/cors in main.go,
+// but this function is kept for compatibility and can be used if needed.
+func (m *Middleware) CORSMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Set CORS headers
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				origin = "*"
+			}
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+			w.Header().Set("Access-Control-Expose-Headers", "X-Request-ID")
+			w.Header().Set("Access-Control-Max-Age", "86400")
+
+			// Handle preflight requests
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // RateLimiter middleware (basic implementation).
-func (m *Middleware) RateLimiter(maxRequests int) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+func (m *Middleware) RateLimiter(maxRequests int) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Basic rate limiting implementation
 			// TODO: Implement actual rate limiting logic
-			return next(c)
-		}
+			// For now, just pass through to next handler
+			next.ServeHTTP(w, r)
+		})
 	}
 }
