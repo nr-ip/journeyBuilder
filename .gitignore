@@ -27,9 +27,10 @@ go.work.sum
 # env file
 .env
 
-# Log files
-logs/
+# Log files : ignore all log files globally, track log directory but not its contents except .gitkeep
 *.log
+log/*
+!log/.gitkeep
 
 # Editor/IDE
 # .idea/
