@@ -74,3 +74,19 @@ func GetLogger() *log.Logger {
 	}
 	return DefaultLogger
 }
+
+// Add convenience wrapper functions to your logger package for cleaner usage:
+// Println logs to the default logger
+func Println(v ...interface{}) {
+	GetLogger().Println(v...)
+}
+
+// Printf logs formatted output to the default logger
+func Printf(format string, v ...interface{}) {
+	GetLogger().Printf(format, v...)
+}
+
+// Fatalf logs a fatal error and exits
+func Fatalf(format string, v ...interface{}) {
+	GetLogger().Fatalf(format, v...)
+}

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"JourneyBuilder/internal/logger"
 	"context"
 	"fmt"
 	"log"
@@ -69,7 +70,7 @@ func NewGeminiService() (*GeminiService, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
-	log.Println("✓ Gemini client created")
+	logger.Println("✓ Gemini client created")
 
 	return &GeminiService{
 		client: client,
@@ -96,6 +97,7 @@ func (c *GeminiService) SendRequest(ctx context.Context, req *RequestBuilder) (*
 		// Correct way: Initialize the struct pointer directly:
 		// "System Prompt" (the instructions that tell the AI how to behave), you shouldn't append it to the contents slice with a user role.
 		// Instead, you pass it in the Config object.
+		logger.Printf("📝 GENERATED SYSTEM PROMPT:\n%s\n", req.SystemPrompt)
 		config.SystemInstruction = &genai.Content{
 			Parts: []*genai.Part{
 				{Text: req.SystemPrompt},
@@ -120,6 +122,7 @@ func (c *GeminiService) SendRequest(ctx context.Context, req *RequestBuilder) (*
 		})
 	}
 
+	logger.Printf("👤 USER MESSAGE:\n%s\n", req.UserMessage)
 	// Current user message
 	contents = append(contents, &genai.Content{
 		Role:  "user",
@@ -176,5 +179,7 @@ func (c *GeminiService) SendRequest(ctx context.Context, req *RequestBuilder) (*
 		return &Response{Text: ""}, nil
 	}
 
-	return &Response{Text: resp.Candidates[0].Content.Parts[0].Text}, nil
+	responseText := resp.Candidates[0].Content.Parts[0].Text
+	logger.Printf("🤖 MODEL RESPONSE:\n%s\n", responseText)
+	return &Response{Text: responseText}, nil
 }

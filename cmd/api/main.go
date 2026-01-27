@@ -49,7 +49,8 @@ func main() {
 		port = "8080"
 	}
 
-	log.Println("Initializing AI services...")
+	// Using custom logger from internal/logger.
+	logger.Println("Initializing AI services...")
 	geminiService, err := services.NewGeminiService()
 	if err != nil {
 		log.Fatalf("Failed to initialize Gemini service: %v", err)
@@ -62,7 +63,7 @@ func main() {
 	verticalsPath := filepath.Join("data", "knowledge", "verticals.json")
 	kb, err := knowledge.NewKnowledgeBase(frameworksPath, sequencesPath, verticalsPath)
 	if err != nil {
-		log.Fatalf("Failed to initialize knowledge base: %v", err)
+		logger.Fatalf("Failed to initialize knowledge base: %v", err)
 	}
 
 	// Initialize validation
@@ -101,10 +102,10 @@ func main() {
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
-	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	log.Printf("🚀 Server starting on port %s", port)
-	log.Printf("📱 Open http://localhost:%s in your browser", port)
-	log.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	logger.Printf("🚀 Server starting on port %s", port)
+	logger.Printf("📱 Open http://localhost:%s in your browser", port)
+	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)
 	}
@@ -159,9 +160,9 @@ func setupGracefulShutdown(geminiService *services.GeminiService) {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		log.Println("\n🛑 Shutting down gracefully...")
+		logger.Println("\n🛑 Shutting down gracefully...")
 		if err := geminiService.Close(); err != nil {
-			log.Printf("Error closing Gemini service: %v", err)
+			logger.Printf("Error closing Gemini service: %v", err)
 		}
 		log.Println("✓ Cleanup complete")
 		os.Exit(0)

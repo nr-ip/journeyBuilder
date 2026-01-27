@@ -93,7 +93,7 @@ func (o *Orchestrator) ProcessChatRequest(
 		UserMessage:         req.CurrentMessage,
 		ConversationHistory: convHistory,
 		Temperature:         0.7,
-		MaxTokens:           1500,
+		MaxTokens:           3000,
 	}
 
 	// 7. Call Gemini AI
