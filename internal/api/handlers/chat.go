@@ -101,6 +101,6 @@ func (h *ChatHandler) ChatStream(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("data: " + chunk + "\n\n"))
 		if hasFlusher {
 			flusher.Flush()
-	}
+		}
 	}
 }

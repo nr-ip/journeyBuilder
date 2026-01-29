@@ -39,7 +39,10 @@ func (cb *ContextBuilder) BuildContext(req *models.ChatRequest) *instruction.Use
 	ctx.CurrentCircleOfTrust = cb.extractCircleOfTrust(req)
 
 	// Extract proposed outcome
-	ctx.ProposedOutcome = cb.extractProposedOutcome(req)
+	// Only extract outcome if we have identified the Circle of Trust, USP, and ICP.
+	if ctx.ExtractedUSP != "" && ctx.ExtractedICP != "" && ctx.CurrentCircleOfTrust != "" {
+		ctx.ProposedOutcome = cb.extractProposedOutcome(req)
+	}
 
 	return ctx
 }
@@ -186,23 +189,22 @@ func (cb *ContextBuilder) extractCircleOfTrust(req *models.ChatRequest) string {
 func (cb *ContextBuilder) extractProposedOutcome(req *models.ChatRequest) string {
 	allText := req.CurrentMessage + " " + cb.concatenateHistory(req.ConversationHistory)
 
-	patterns := []string{
+	// Use a struct to define patterns and which text source to search
+	// Broad patterns should only search CurrentMessage to avoid false positives from history
+	type searchPattern struct {
+		pattern string
+		text    string
+	}
+
+	patterns := []searchPattern{
 		// Explicit goal/outcome mentions (highest priority)
-		`(?i)(?:goal|outcome|objective)[:\s]+([^.!?\n]+)`,
+		{`(?i)(?:goal|outcome|objective)[:\s]+([^.!?\n]+)`, allText},
 		// "My goal is" / "Our goal is" patterns
-		`(?i)(?:my|our)\s+goal\s+is\s+([^.!?\n]+)`,
+		{`(?i)(?:my|our)\s+goal\s+is\s+([^.!?\n]+)`, allText},
 		// "desired outcome" / "desired result"
-		`(?i)desired\s+(?:outcome|result)[:\s]+([^.!?\n]+)`,
-		// "I want to" / "we want to" patterns
-		`(?i)(?:i|we)\s+want\s+to\s+([^.!?\n]+)`,
-		// "I need to" / "we need to" patterns
-		`(?i)(?:i|we)\s+need\s+to\s+([^.!?\n]+)`,
-		// "I'm looking to" / "we're looking to" patterns
-		`(?i)(?:i|we)(?:'m|'re)?\s+looking\s+to\s+([^.!?\n]+)`,
-		// "I'd like to" / "we'd like to" patterns
-		`(?i)(?:i|we)'d\s+like\s+to\s+([^.!?\n]+)`,
+		{`(?i)desired\s+(?:outcome|result)[:\s]+([^.!?\n]+)`, allText},
 		// Specific outcome verbs (avoid generic "get")
-		`(?i)(?:achieve|accomplish|obtain|generate|create|build|establish|develop)\s+([^.!?\n]{5,50})`,
+		{`(?i)(?:achieve|accomplish|obtain|generate|create|build|establish|develop)\s+([^.!?\n]{5,50})`, req.CurrentMessage},
 	}
 
 	// Common non-outcome phrases to exclude
@@ -213,9 +215,9 @@ func (cb *ContextBuilder) extractProposedOutcome(req *models.ChatRequest) string
 		"some", "any", "all", "none", "one", "two", "three",
 	}
 
-	for _, pattern := range patterns {
-		re := regexp.MustCompile(pattern)
-		matches := re.FindStringSubmatch(allText)
+	for _, sp := range patterns {
+		re := regexp.MustCompile(sp.pattern)
+		matches := re.FindStringSubmatch(sp.text)
 		if len(matches) > 1 {
 			extracted := strings.TrimSpace(matches[1])
 			// Filter out very short matches

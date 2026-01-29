@@ -53,10 +53,10 @@ func (c *ComposerConfig) buildWorkflowStepContext() string {
 		StepDiscovery:            "STEP 2: Next tell the user, Tell me about your product's Unique Selling Proposition (USP) and its Ideal Customer Profile (ICP)",
 		StepValidation:           "STEP 3: Respond back with your understanding summary of the USP and the ICP.  Ask the user to confirm and continue to the next step when answered in the affirmative.",
 		StepFrameworkApplication: "STEP 4: Next ask the user, Who is your intended audience according to The Buyers' Circles of Trust(tm)?  If you're not sure, tell me who you want to target and I'll identify which Circle of Trust it is.",
-		StepCircleConfirmation:   "STEP 5: Confirm to the user your understanding of which Circle of Trust is the intended audience of the automated email sequence. Ask the user to confirm this is correct and continue to the next step when answered in the affirmative.",
+		StepCircleConfirmation:   "STEP 5: Propose to the user your understanding of which Circle of Trust is the intended audience of the automated email sequence and continue to the next step when answered in the affirmative.",
 		StepGoalSetting:          "STEP 6: Next ask the user, What is the desired outcome of your automated email sequence?",
-		StepAnalysis:             "STEP 7: Compare the desired outcome against the Circle of Trust of the intended audience. Tell the user whether the desired outcome is appropriate to the Circle of Trust. Provide your analysis ONCE and stop. Do NOT repeat this analysis. Do NOT say 'Let's move to STEP 8' or announce transitions. After providing the analysis, the system will automatically advance to Step 8.",
-		StepExecution:            "STEP 8: IMMEDIATELY GENERATE THE COMPLETE EMAIL SEQUENCE NOW. DO NOT announce transitions, say 'Let's move to STEP 8', or make any introductory statements. DO NOT ASK ANY QUESTIONS. DO NOT ask about tone, subject lines, individual emails, CTAs, delays, or anything else. You have all the information you need. Start with the table that includes Email #, Subject Line, AND Day Delay (required for every row). Then provide full content for each email. Begin generating immediately - no announcements, no questions, no confirmations, no asking for preferences. Just generate the sequence.",
+		StepAnalysis:             "STEP 7: Compare the desired outcome against the Circle of Trust of the intended audience. Tell the user whether the desired outcome is appropriate to the Circle of Trust. Provide your analysis. Ask the user to confirm and continue to the next step when answered in the affirmative.",
+		StepExecution:            "STEP 8: IMMEDIATELY GENERATE THE COMPLETE EMAIL SEQUENCE. DO NOT ASK QUESTIONS. Use the provided sequence template for structure. If the template is missing, default to a 3-email sequence with a 2-3 day cadence. Start with the table, then the email content. Generate immediately.",
 	}
 
 	return fmt.Sprintf("CURRENT WORKFLOW STEP: %s\nFOCUS YOUR RESPONSE ON THIS STEP ONLY.", stepDescriptions[c.WorkflowStep])
@@ -93,6 +93,10 @@ CRITICAL TABLE REQUIREMENTS:
 REQUIRED ACTION: Generate the complete sequence immediately. Start directly with the table, then provide all email content. 
 Each row must include: Email number, Subject line (max 40 chars), and Day Delay (number of days to wait before sending this email).
 - AFTER THE TABLE, provide the full email content for each email in the sequence.
+- For each email, you MUST include the Day Delay information directly under the subject line, with the labels in bold. For example:
+  **Subject:** Welcome!
+  **Send Delay:** Day 0
+
 - Each email must be clearly labeled (e.g., "Email 1:", "Email 2:", etc.).
 - Subject lines must be personalized, compelling, and under 40 characters.
 - Email content must be concise (max %d chars), compliant (CAN-SPAM, GDPR), and written at %s readability level.
@@ -123,7 +127,8 @@ func (c *ComposerConfig) buildUserContextLayer() string {
 	if ctx.CurrentCircleOfTrust != "" {
 		sb.WriteString(fmt.Sprintf("CURRENT CIRCLE: %s\n", ctx.CurrentCircleOfTrust))
 	}
-	if ctx.ProposedOutcome != "" {
+	// Only include ProposedOutcome from Step 7 onwards (Analysis and Execution)
+	if ctx.ProposedOutcome != "" && (c.WorkflowStep == StepAnalysis || c.WorkflowStep == StepExecution) {
 		sb.WriteString(fmt.Sprintf("PROPOSED OUTCOME: %s\n", ctx.ProposedOutcome))
 	}
 

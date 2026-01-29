@@ -76,15 +76,15 @@ func (m *Middleware) RequestLogger() func(http.Handler) http.Handler {
 			next.ServeHTTP(rw, r)
 
 			// Log response
-				duration := time.Since(start)
-				m.logger.Infof(
-					"%s %s uid=%s status=%d latency=%v",
+			duration := time.Since(start)
+			m.logger.Infof(
+				"%s %s uid=%s status=%d latency=%v",
 				r.Method,
 				r.URL.Path,
-					reqID,
+				reqID,
 				rw.statusCode,
-					duration,
-				)
+				duration,
+			)
 		})
 	}
 }
