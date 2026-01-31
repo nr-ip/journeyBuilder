@@ -35,3 +35,7 @@ log/*
 # Editor/IDE
 # .idea/
 .vscode/
+.github/
+
+#ignore the go executable file
+journey-builder
