@@ -19,7 +19,9 @@ jobs:
       - uses: anomalyco/opencode/github@latest
         with:
           model: 'google-vertex/gemini-2.5-flash'
+          use_github_token: true
           prompt: "Summarize this issue and suggest appropriate GitHub labels."
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
