@@ -28,6 +28,8 @@ jobs:
         uses: anomalyco/opencode/github@latest
         with:
           model: 'google-vertex/gemini-2.5-flash'
+          # ADD THIS LINE to prevent branch creation:
+          agent: 'plan'
           use_github_token: true
           prompt: "Scan the repository for TODOs or technical debt and summarize it."
         env:
