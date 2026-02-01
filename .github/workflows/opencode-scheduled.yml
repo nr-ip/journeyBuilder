@@ -1,0 +1,20 @@
+name: OpenCode Scheduled
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+jobs:
+  maintenance:
+    permissions:
+      id-token: 'write'
+      issues: 'write'
+      contents: 'read'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/527057980290/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
+      - uses: anomalyco/opencode/github@latest
+        with:
+          prompt: "Scan the repo for TODO comments and create a summary issue for the team."

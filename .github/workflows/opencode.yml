@@ -1,0 +1,22 @@
+name: OpenCode Command
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  execute:
+    if: startsWith(github.event.comment.body, '/opencode') || startsWith(github.event.comment.body, '/oc')
+    permissions:
+      id-token: 'write'
+      contents: 'write'
+      issues: 'write'
+      pull-requests: 'write'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/527057980290/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+          service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
+      - uses: anomalyco/opencode/github@latest
+        with:
+          args: "--project maropost1984"

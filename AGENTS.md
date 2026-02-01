@@ -11,293 +11,128 @@ go build -o journey-builder ./cmd/api
 
 # Build with race detector
 go build -race -o journey-builder ./cmd/api
-
-# Clean build artifacts
-go clean
 ```
 
 ### Running
 ```bash
-# Run the server directly
+# Run the server directly from the project root
 ./journey-builder
 
 # Run with environment variables
 PORT=3000 ./journey-builder
 
-# Development mode (hot reload with air)
+# For development with hot-reloading (if air is installed)
 # go install github.com/cosmtrek/air@latest
 # air
 ```
 
 ### Testing
-**Note:** Currently no test files exist. When adding tests:
+**Note:** Currently, no `_test.go` files exist. When adding tests, use standard Go testing practices.
 
 ```bash
 # Run all tests
 go test ./...
 
-# Run tests with coverage
-go test -cover ./...
+# Run tests for a specific package
+go test ./internal/orchestrator
 
 # Run a specific test function
-go test -run TestFunctionName ./path/to/package
+go test -run TestMyFunction ./internal/orchestrator
 
-# Run tests with race detection
-go test -race ./...
-
-# Generate coverage profile
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
+# Run tests with race detection and coverage
+go test -race -cover ./...
 ```
 
 ### Linting and Formatting
 ```bash
-# Format code
+# Format code (do this before every commit)
 go fmt ./...
 
-# Check for issues
-go vet ./...
-
-# Install and run golangci-lint
-# go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-golangci-lint run
-
-# Fix imports (install goimports)
+# Fix imports (do this before every commit)
 # go install golang.org/x/tools/cmd/goimports@latest
 goimports -w .
 
-# Clean dependencies
+# Find common issues
+go vet ./...
+
+# Run comprehensive linter (if installed)
+# go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+golangci-lint run
+
+# Tidy module dependencies
 go mod tidy
 ```
 
 ## Code Style Guidelines
 
-### General Go Conventions
-- Follow standard Go naming: camelCase for variables/functions, PascalCase for exported
-- Use `gofmt` and `goimports` for formatting
-- Write clear, descriptive names
-- Add documentation comments for exported functions/types
-- Keep functions small and focused
-- Use meaningful error messages
+### General
+- Follow standard Go naming: `camelCase` for internal variables/functions, `PascalCase` for exported.
+- Keep functions small, focused, and under ~50 lines.
+- Write clear, descriptive names for variables, functions, and types.
+- Add documentation comments to all exported functions and types.
+- Use meaningful, wrapped errors. Avoid panicking outside of main initialization.
 
 ### Imports
-- Group: internal, blank line, standard library, blank line, third-party
-- Full paths for internal packages
-- Remove unused imports
+Group imports in the following order, separated by blank lines:
+1. Standard library (`context`, `encoding/json`, `fmt`, `net/http`)
+2. Third-party packages (`github.com/gorilla/mux`)
+3. Internal project packages (`JourneyBuilder/internal/models`)
 
 ```go
 import (
-    "JourneyBuilder/internal/models"
-
     "context"
     "encoding/json"
 
     "github.com/gorilla/mux"
+
+    "JourneyBuilder/internal/models"
 )
 ```
 
 ### Error Handling
-- Check and handle errors appropriately
-- Return errors to caller (no panicking except fatal issues)
-- Use custom error types
-- Log with context
+- Handle all errors. Return errors to the caller instead of logging and returning `nil`.
+- Use `fmt.Errorf("...: %w", err)` to wrap errors with context.
 
 ```go
-func (s *Service) ProcessRequest(req *Request) error {
-    if err := s.validateRequest(req); err != nil {
-        return fmt.Errorf("invalid request: %w", err)
+func (s *Service) Process(req *Request) error {
+    if err := s.validate(req); err != nil {
+        return fmt.Errorf("validation failed: %w", err)
     }
-
-    result, err := s.process(req)
-    if err != nil {
-        s.logger.Printf("Failed to process request %v: %v", req.ID, err)
-        return err
-    }
-
+    // ...
     return nil
 }
 ```
 
 ### Types and Structs
-- Meaningful names
-- JSON tags for API structs
-- Pointer receivers for modifying methods
-- Interfaces for dependencies
+- Use meaningful names for structs and interfaces.
+- Add `json:"..."` tags for all fields in API-facing structs.
+- Use pointer receivers for methods that modify the struct.
 
 ```go
 type ChatRequest struct {
-    CurrentMessage      string                `json:"currentMessage"`
-    ConversationHistory []Message             `json:"conversationHistory"`
-    BaseSystemPrompt    string                `json:"baseSystemPrompt"`
-    UserMetadata        map[string]any        `json:"userMetadata,omitempty"`
+    CurrentMessage      string    `json:"currentMessage"`
+    ConversationHistory []Message `json:"conversationHistory"`
 }
 ```
-
-### Functions and Methods
-- Under 50 lines
-- Descriptive names
-- Early returns for errors
-- Use context for timeouts
-
-```go
-func (o *Orchestrator) ProcessChatRequest(
-    ctx context.Context,
-    req *models.ChatRequest,
-    stream bool,
-) (*models.ChatResponse, error) {
-    if err := o.inputValidator.ValidateInput(req.CurrentMessage); err != nil {
-        return &models.ChatResponse{
-            Message: "Security protocol violation detected.",
-            Error:   err.Error(),
-        }, err
-    }
-
-    // Core processing
-    // ...
-}
-```
-
-### Constants and Configuration
-- Constants for magic numbers
-- Group related constants
-- Environment variables for config
-- Validate required env vars at startup
-
-```go
-const (
-    DefaultPort     = "8080"
-    MaxMessageLength = 10000
-    RequestTimeout   = 30 * time.Second
-)
-
-func initConfig() error {
-    required := []string{"GCP_PROJECT_ID", "GCP_REGION"}
-    for _, env := range required {
-        if os.Getenv(env) == "" {
-            return fmt.Errorf("required environment variable %s not set", env)
-        }
-    }
-    return nil
-}
-```
-
-### Logging
-- Structured logging with levels
-- Include context
-- Avoid sensitive data
-- Use internal logger package
-
-```go
-logger.Printf("Processing chat request for vertical: %s", vertical)
-```
-
-### Security Best Practices
-- Validate all inputs
-- Use validation for prompt injection
-- Never log sensitive data
-- Proper CORS
-- HTTPS in production
 
 ### Package Organization
-- Focused packages
-- Internal for private code
-- Export only necessary
-- Directory structure:
-  - `cmd/` - Entry points
-  - `internal/` - Private code
-  - `internal/models/` - Data structures
-  - `internal/services/` - Integrations
-  - `internal/validation/` - Validation
-
-### Dependencies
-- Minimal and maintained
-- Use go mod
-- Run `go mod tidy` after changes
-- Pin versions
-
-### Performance Considerations
-- Efficient structures (maps for lookups)
-- Caching (LRU used)
-- Profile critical code
-- Goroutines for concurrency
-- Context for timeouts
-
-### Testing Guidelines (When Adding Tests)
-- Unit tests for public functions
-- Table-driven tests
-- Mock dependencies
-- Test errors and edge cases
-- >80% coverage
-
-```go
-func TestOrchestrator_ProcessChatRequest(t *testing.T) {
-    tests := []struct {
-        name     string
-        input    string
-        expected string
-        wantErr  bool
-    }{
-        {
-            name:    "valid request",
-            input:   "I sell supplements",
-            expected: "What's your USP?",
-            wantErr: false,
-        },
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            // Test implementation
-        })
-    }
-}
-```
+- `cmd/`: Application entry points.
+- `internal/`: All private application code.
+  - `api/`: HTTP handlers and routing.
+  - `models/`: Core data structures (request/response types).
+  - `services/`: External service integrations (e.g., Gemini).
+  - `orchestrator/`: Business logic coordination.
+  - `validation/`: Input/output validation.
+  - `knowledge/`: Knowledge base management.
+- `public/`: Static assets for the frontend.
 
 ## Project-Specific Patterns
 
-### AI Service Integration
-- Use services package for AI calls
-- Proper error handling
-- Cache responses
-- Validate AI responses
-
-### Workflow Management
-- 8-step workflow in orchestrator
-- Enums for steps
-- Stateless context
-- Validate transitions
-
-### Knowledge Base Usage
-- Extract relevant context
-- Compressed for tokens
-- Cache knowledge
-- Update files carefully
-
-## Development Workflow
-
-1. **Before coding**: `go mod tidy` and `go fmt ./...`
-2. **During development**: `go build` frequently
-3. **Before commit**: Format, vet, lint
-4. **Testing**: Add tests, run existing
-5. **Security**: Validate inputs, no logging sensitive data
-
-## File Organization
-
-- Related functionality in same package
-- Descriptive filenames (e.g., `chat_handler.go`)
-- Group handlers, models, services
-- Document packages
-
-## Common Patterns to Follow
-
-- Dependency injection
-- Interfaces for mocking
-- Resource cleanup with defer
-- Context propagation
-- Error wrapping
+- **Dependency Injection:** Dependencies (like services and the knowledge base) are initialized in `main.go` and passed to the components that need them.
+- **Custom Logger:** Use the logger from `JourneyBuilder/internal/logger` for all logging. It provides structured logging to both console and a file.
+- **Environment Variables:** Configuration is managed via environment variables loaded from a `.env` file using `godotenv`. See `main.go` for required variables.
 
 ## No Cursor or Copilot Rules Found
 
-No `.cursorrules` or `.cursor/rules/` directory found. No `.github/copilot-instructions.md` found.
+No `.cursorrules`, `.cursor/rules/`, or `.github/copilot-instructions.md` files were found in this repository.
 
-This document should be updated as the codebase evolves.
