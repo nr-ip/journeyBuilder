@@ -6,9 +6,10 @@ on:
 jobs:
   maintenance:
     permissions:
-      id-token: 'write'
-      issues: 'write'
-      contents: 'read'
+      id-token: 'write'      # Required for Google Cloud handshake
+      contents: 'write'      # Required to push code/branches
+      pull-requests: 'write' # Required to open/comment on PRs
+      issues: 'write'        # Required to comment on issues
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
