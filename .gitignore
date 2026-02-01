@@ -38,3 +38,6 @@ log/*
 
 #ignore the go executable file
 journey-builder
+
+# Ignore temporary Google Cloud credentials
+gha-creds-*.json
