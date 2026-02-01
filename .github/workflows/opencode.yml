@@ -2,6 +2,7 @@ name: OpenCode Command
 on:
   issue_comment:
     types: [created]
+
 jobs:
   execute:
     if: startsWith(github.event.comment.body, '/opencode') || startsWith(github.event.comment.body, '/oc')
@@ -19,5 +20,7 @@ jobs:
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
       - uses: anomalyco/opencode/github@latest
         with:
-          model: 'google-vertex/gemini-2.0-flash-001' # Correct provider and ID
-          args: "--project maropost1984 --location us-central1"
+          model: 'google-vertex/gemini-2.0-flash-001'
+        env:
+          GOOGLE_CLOUD_PROJECT: 'maropost1984'
+          GOOGLE_CLOUD_LOCATION: 'us-central1'

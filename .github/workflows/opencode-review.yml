@@ -2,6 +2,7 @@ name: OpenCode Review
 on:
   pull_request:
     types: [opened, synchronize]
+
 jobs:
   review:
     permissions:
@@ -17,6 +18,8 @@ jobs:
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
       - uses: anomalyco/opencode/github@latest
         with:
-          model: 'google-vertex/gemini-1.5-pro-002' # Correct provider and ID
-          args: "--project maropost1984 --location us-central1"
-          prompt: "Review this PR for logic errors and security vulnerabilities."
+          model: 'google-vertex/gemini-1.5-pro-002'
+          prompt: "Review this PR for security issues, logic flaws, and code style."
+        env:
+          GOOGLE_CLOUD_PROJECT: 'maropost1984'
+          GOOGLE_CLOUD_LOCATION: 'us-central1'
