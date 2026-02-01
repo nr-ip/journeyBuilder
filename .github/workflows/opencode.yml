@@ -20,7 +20,7 @@ jobs:
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
       - uses: anomalyco/opencode/github@latest
         with:
-          model: 'google-vertex/gemini-2.0-flash-001'
+          model: 'google-vertex/gemini-2.0-flash'
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
