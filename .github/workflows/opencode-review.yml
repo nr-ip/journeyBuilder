@@ -27,6 +27,8 @@ jobs:
         uses: anomalyco/opencode/github@latest
         with:
           model: 'google-vertex/gemini-2.5-pro'
+          # ADD THIS LINE to prevent branch creation:
+          agent: 'plan'
           use_github_token: true
           prompt: "Review this PR for security issues, logic flaws, and code style."
         env:
