@@ -17,4 +17,5 @@ jobs:
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
       - uses: anomalyco/opencode/github@latest
         with:
+          model: 'google/gemini-1.5-pro'
           prompt: "Review this PR for logic errors and security vulnerabilities."

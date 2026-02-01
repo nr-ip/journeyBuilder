@@ -19,4 +19,5 @@ jobs:
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
       - uses: anomalyco/opencode/github@latest
         with:
+          model: 'google/gemini-2.5-flash'
           args: "--project maropost1984"
