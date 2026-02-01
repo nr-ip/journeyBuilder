@@ -48,4 +48,3 @@ type ComposerConfig struct {
 	KnowledgeContext string
 	OutputFormat     OutputFormat
 }
-
