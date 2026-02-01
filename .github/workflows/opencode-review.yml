@@ -17,7 +17,14 @@ jobs:
         with:
           workload_identity_provider: 'projects/527057980290/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
-      - uses: anomalyco/opencode/github@latest
+                
+      - name: Configure Git Identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Run OpenCode Agent
+        uses: anomalyco/opencode/github@latest
         with:
           model: 'google-vertex/gemini-2.5-pro'
           use_github_token: true
