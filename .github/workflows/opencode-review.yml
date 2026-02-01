@@ -6,9 +6,10 @@ on:
 jobs:
   review:
     permissions:
-      id-token: 'write'
-      contents: 'read'
-      pull-requests: 'write'
+      id-token: 'write'      # Required for Google Cloud handshake
+      contents: 'write'      # Required to push code/branches
+      pull-requests: 'write' # Required to open/comment on PRs
+      issues: 'write'        # Required to comment on issues
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,10 +17,23 @@ jobs:
         with:
           workload_identity_provider: 'projects/527057980290/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
-      - uses: anomalyco/opencode/github@latest
+                
+      - name: Configure Git Identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Run OpenCode Agent
+        uses: anomalyco/opencode/github@latest
         with:
-          model: 'google-vertex/gemini-1.5-pro-002'
+          model: 'google-vertex/gemini-2.5-pro'
+          use_github_token: true
           prompt: "Review this PR for security issues, logic flaws, and code style."
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: 'github-actions[bot]'
+          GIT_AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+          GIT_COMMITTER_NAME: 'github-actions[bot]'
+          GIT_COMMITTER_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
