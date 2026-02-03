@@ -38,12 +38,17 @@ func (c *ComposerConfig) ComposeInstructions() string {
 
 // buildComplianceLayer adds security and compliance instructions.
 func (c *ComposerConfig) buildComplianceLayer() string {
-	return `SECURITY & COMPLIANCE MANDATE:
-- CAN-SPAM: Include unsubscribe link and physical address in every email
-- GDPR/CASL: No personal data collection without explicit consent
-- Spam Rate Target: <0.3% - Avoid trigger words, use balanced design
-- Subject Lines: 40 chars max, personalized where possible
-`
+	var sb strings.Builder
+	sb.WriteString("SECURITY & COMPLIANCE MANDATE:\n")
+	sb.WriteString("- GDPR/CASL: No personal data collection without explicit consent\n")
+	sb.WriteString("- Spam Rate Target: <0.3% - Avoid trigger words, use balanced design\n")
+	sb.WriteString("- Subject Lines: 40 chars max, personalized where possible\n")
+
+	// Only include CAN-SPAM related instructions during the execution step
+	if c.WorkflowStep == StepExecution {
+		sb.WriteString("- CAN-SPAM: Include unsubscribe link and physical address in every email\n")
+	}
+	return sb.String()
 }
 
 // buildWorkflowStepContext injects step-specific instructions.
