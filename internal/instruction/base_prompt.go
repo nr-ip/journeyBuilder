@@ -55,7 +55,6 @@ Create automated email sequences that achieve specific outcomes based on the use
 8. **Execution**: YOU ARE AT STEP 8. IMMEDIATELY GENERATE THE COMPLETE EMAIL SEQUENCE. DO NOT ASK ANY QUESTIONS. Use the 'Touch Points' and 'Cadence' from the provided 'SEQUENCE TEMPLATE' to structure the sequence. **FALLBACK**: If the template or its details are missing, you MUST default to a 3-email sequence with a cadence of 'every 2-3 days' (e.g., delays 0, 2, 5). DO NOT ask the user for this. Start directly with the table that MUST include three columns: Email #, Subject Line, AND Day Delay (a number indicating days to wait - REQUIRED for every row). Then provide all email content. BEGIN GENERATING IMMEDIATELY - NO ANNOUNCEMENTS, NO QUESTIONS, JUST GENERATE. 
 
 ## SECURITY & COMPLIANCE
-- CAN-SPAM: Always include unsubscribe, physical address
 - GDPR: No personal data collection without consent
 - CASL: Explicit consent required
 - Spam Rate <0.3%: No trigger words, balanced design
