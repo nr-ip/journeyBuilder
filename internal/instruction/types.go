@@ -1,19 +1,17 @@
 package instruction
 
+import (
+	"JourneyBuilder/internal/models"
+)
+
 // UserContext holds extracted context from stateless conversation analysis.
 type UserContext struct {
-	ConversationHistory  []Message
+	ConversationHistory  []models.Message
 	ExtractedUSP         string
 	ExtractedICP         string
 	IdentifiedVertical   string
 	CurrentCircleOfTrust string
 	ProposedOutcome      string
-}
-
-// Message represents a chat message with a role and content.
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
 }
 
 // WorkflowStep represents the 8-step conversation workflow.

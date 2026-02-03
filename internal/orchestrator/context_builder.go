@@ -250,7 +250,7 @@ func (cb *ContextBuilder) extractProposedOutcome(req *models.ChatRequest) string
 }
 
 // hasValidationBeenDone checks if the model has already provided a validation summary
-func (cb *ContextBuilder) hasValidationBeenDone(history []instruction.Message) bool {
+func (cb *ContextBuilder) hasValidationBeenDone(history []models.Message) bool {
 	// Look for validation indicators in model responses
 	validationKeywords := []string{
 		"understanding", "summary", "confirm", "correct", "accurate",
@@ -276,7 +276,7 @@ func (cb *ContextBuilder) hasValidationBeenDone(history []instruction.Message) b
 }
 
 // hasCircleConfirmationBeenDone checks if the model has already confirmed the Circle
-func (cb *ContextBuilder) hasCircleConfirmationBeenDone(history []instruction.Message) bool {
+func (cb *ContextBuilder) hasCircleConfirmationBeenDone(history []models.Message) bool {
 	// Look for Circle confirmation indicators in model responses
 	confirmationKeywords := []string{
 		"circle of trust", "buyers' circle", "intended audience",
@@ -297,7 +297,7 @@ func (cb *ContextBuilder) hasCircleConfirmationBeenDone(history []instruction.Me
 }
 
 // hasAnalysisBeenDone checks if the model has already provided the Step 7 analysis
-func (cb *ContextBuilder) hasAnalysisBeenDone(history []instruction.Message) bool {
+func (cb *ContextBuilder) hasAnalysisBeenDone(history []models.Message) bool {
 	// Look for analysis indicators in model responses
 	analysisKeywords := []string{
 		"appropriate", "inappropriate", "aligns", "aligns perfectly",
@@ -331,7 +331,7 @@ func (cb *ContextBuilder) hasAnalysisBeenDone(history []instruction.Message) boo
 	return false
 }
 
-func (cb *ContextBuilder) concatenateHistory(history []instruction.Message) string {
+func (cb *ContextBuilder) concatenateHistory(history []models.Message) string {
 	var sb strings.Builder
 	// no need to enforce maxHistoryLength strictly here, client should trim; but it can be added if needed
 	for _, msg := range history {
