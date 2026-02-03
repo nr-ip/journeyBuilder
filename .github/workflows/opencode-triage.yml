@@ -26,7 +26,7 @@ jobs:
       - name: Run OpenCode Agent
         uses: anomalyco/opencode/github@latest
         with:
-          model: 'plan'
+          model: 'google-vertex/gemini-2.5-flash'
           # ADD THIS LINE to prevent branch creation:
           agent: 'plan'
           use_github_token: true
