@@ -6,6 +6,10 @@ on:
 jobs:
   triage:
   # No 'if' check needed here since the 'on' trigger is already specific
+  # CHANGE: Added check for 'magic strings' in the issue body
+    if: |
+      contains(github.event.issue.body, '/opencode') || 
+      contains(github.event.issue.body, '/analyze')
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       contents: 'write'      # Required to push code/branches
