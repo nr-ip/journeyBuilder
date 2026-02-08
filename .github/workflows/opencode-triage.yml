@@ -8,8 +8,10 @@ jobs:
   # No 'if' check needed here since the 'on' trigger is already specific
   # CHANGE: Added check for 'magic strings' in the issue body
     if: |
-      contains(github.event.issue.body, '/opencode') || 
-      contains(github.event.issue.body, '/analyze')
+      startsWith(github.event.issue.body, '/opencode') || 
+      startsWith(github.event.issue.body, '/analyze') ||
+      github.event.issue.author_association == 'OWNER' 
+      
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       contents: 'write'      # Required to push code/branches
@@ -20,7 +22,7 @@ jobs:
       # CHANGE 1: Explicitly point to the default branch (main) 
       # This fixes the "fatal: not a git repository" for 'opened' events
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5 # Upgraded to v5 for 2026 Node support
         with:
           fetch-depth: 0
           ref: ${{ github.event.repository.default_branch }}
@@ -34,7 +36,7 @@ jobs:
                 
       - name: Configure Git Identity
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
       - name: Run OpenCode Agent
@@ -44,7 +46,8 @@ jobs:
           # ADD THIS LINE to prevent branch creation:
           agent: 'plan'
           use_github_token: true
-          prompt: "Summarize this issue and suggest appropriate GitHub labels."
+          prompt: "Analyze the repository context and this issue: ${{ github.event.issue.title }}. 
+            Summarize this issue and suggest appropriate GitHub labels. Identify which files in are likely involved"
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
