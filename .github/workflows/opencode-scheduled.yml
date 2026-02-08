@@ -12,8 +12,12 @@ jobs:
       issues: 'write'        # Required to comment on issues
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Full history so AI can find "stale" debt
+          
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/527057980290/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
@@ -21,9 +25,10 @@ jobs:
                 
       - name: Configure Git Identity
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
+      # STEP 1: AI Maintenance Scan
       - name: Run OpenCode Agent
         uses: anomalyco/opencode/github@latest
         with:
@@ -31,7 +36,11 @@ jobs:
           # ADD THIS LINE to prevent branch creation:
           agent: 'plan'
           use_github_token: true
-          prompt: "Scan the repository for TODOs or technical debt and summarize it."
+          prompt: |
+              1. Scan the repository for TODOs and present them as a Checkbox list.
+              2. Identify any open issues that haven't had activity in 30 days.
+              3. Post a summary as a new issue titled 'Weekly Tech Debt Report'.
+              4. Organize the report by 'Priority' (Critical, Minor, Cleanup).
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
