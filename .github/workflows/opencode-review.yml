@@ -1,26 +1,50 @@
-name: OpenCode Review
+name: OpenCode Agentic Integration and Review
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, ready_for_review]
+  issue_comment:
+    types: [created] # Allows triggering fixes via "/opencode fix"
+
+# Prevent multiple AI runs on the same PR to save on GCP costs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # Default to read
+
 
 jobs:
   review:
+  # Ensure this only runs for authorized comments or PR events
+    if: |
+      github.event_name == 'pull_request' || 
+      contains(github.event.comment.body, '/opencode') || 
+      contains(github.event.comment.body, '/oc')
+      
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       contents: 'write'      # Required to push code/branches
       pull-requests: 'write' # Required to open/comment on PRs
       issues: 'write'        # Required to comment on issues
+      
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+      - name: Checkout Code
+        uses: actions/checkout@v5 #Upgraded to V5 (2026) standard
+        with:
+          fetch-depth: 0 # AI need full context to understand code
+          
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/527057980290/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           service_account: 'gemini-app-sa-maropost-tes-198@maropost1984.iam.gserviceaccount.com'
                 
       - name: Configure Git Identity
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
       - name: Run OpenCode Agent
@@ -30,7 +54,13 @@ jobs:
           # ADD THIS LINE to prevent branch creation:
           agent: 'review'
           use_github_token: true
-          prompt: "Review this PR for security issues, logic flaws, and code style."
+          prompt: 
+            "Review this PR for
+            1. Security issues, logic flaws, and code style.
+            2. Logic flaws and edge cases
+            3. Adherence to project @StyleGuide.md(if exists)
+            Provide specific code suggestions where possible
+            "
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
