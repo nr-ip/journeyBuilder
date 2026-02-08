@@ -51,8 +51,10 @@ jobs:
         uses: anomalyco/opencode/github@latest
         with:
           model: 'google-vertex/gemini-2.5-pro'
-          # ADD THIS LINE to prevent branch creation:
-          agent: 'review'
+          # --obsolete -- ADD THIS LINE to prevent branch creation:
+          # ONLY use 'editor' if the comment starts exactly with the fix command
+          agent: >
+            ${{ startsWith(github.event.comment.body, '/opencode fix') && 'editor' || 'review' }}
           use_github_token: true
           prompt: 
             "Review this PR for
