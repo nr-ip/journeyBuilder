@@ -11,8 +11,20 @@ jobs:
       pull-requests: 'write' # Required to open/comment on PRs
       issues: 'write'        # Required to comment on issues
     runs-on: ubuntu-latest
+    
+    # GLOBAL JOB ENV: Inherited by all steps below
+    env:
+          GOOGLE_CLOUD_PROJECT: 'maropost1984'
+          GOOGLE_CLOUD_LOCATION: 'us-central1'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: 'github-actions[bot]'
+          GIT_AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+          GIT_COMMITTER_NAME: 'github-actions[bot]'
+          GIT_COMMITTER_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout Code
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Full history so AI can find "stale" debt
           
@@ -41,11 +53,22 @@ jobs:
               2. Identify any open issues that haven't had activity in 30 days.
               3. Post a summary as a new issue titled 'Weekly Tech Debt Report'.
               4. Organize the report by 'Priority' (Critical, Minor, Cleanup).
-        env:
-          GOOGLE_CLOUD_PROJECT: 'maropost1984'
-          GOOGLE_CLOUD_LOCATION: 'us-central1'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: 'github-actions[bot]'
-          GIT_AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
-          GIT_COMMITTER_NAME: 'github-actions[bot]'
-          GIT_COMMITTER_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+              
+      # STEP 2: Automated Branch Cleanup (Value Add)
+      - name: Cleanup Merged OpenCode Branches
+        run: |
+          echo "Pruning remote branches..."
+          git remote prune origin
+          
+          # Finds remote branches starting with 'opencode/' that are already merged into main
+          MERGED_BRANCHES=$(git branch -r --merged origin/main | grep 'origin/opencode/' | sed 's/origin\///')
+          
+          if [ -z "$MERGED_BRANCHES" ]; then
+            echo "No merged OpenCode branches to clean."
+          else
+            for branch in $MERGED_BRANCHES; do
+              echo "Deleting $branch..."
+              git push origin --delete $branch
+            done
+          fi
+        
