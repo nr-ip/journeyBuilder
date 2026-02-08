@@ -5,7 +5,8 @@ on:
 
 jobs:
   execute:
-    if: startsWith(github.event.comment.body, '/opencode') || startsWith(github.event.comment.body, '/oc')
+    if: startsWith(github.event.comment.body, '/opencode') || startsWith(github.event.comment.body, '/oc') &&
+      github.event.comment.user.type != 'Bot'
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       contents: 'write'      # Required to push code/branches
@@ -31,9 +32,53 @@ jobs:
       - name: Run OpenCode Agent
         uses: anomalyco/opencode/github@latest
         with:
-          model: 'google-vertex/gemini-2.5-flash'
+          model: 'google-vertex/gemini-2.5-pro' # Upgrade to Pro for actual coding
+          # DYNAMIC AGENT MODE:
+          # /oc fix -> editor | /oc plan -> plan | /oc review -> review
+          agent: >
+            ${{ contains(github.event.comment.body, 'fix') && 'editor' || 
+                contains(github.event.comment.body, 'plan') && 'plan' || 'review' }}
           use_github_token: true
-          branch_name: 'opencode/issue-${{ github.event.issue.number }}'
+          branch_name: 'opencode/fix-issue-${{ github.event.issue.number }}'
+          # Value Add: Pass the actual user comment as the specific instruction
+          prompt: |
+            User Command: "${{ github.event.comment.body }}"
+            Context: Resolve the parent issue using the instructions provided in the command.
+
+      - name: Update Issue Status
+        if: success() # Only run if the AI successfully processed the command
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            
+            // 1. Add the "in-progress" label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              labels: ['status: in-progress', 'agentic-fix']
+            });
+
+            // 2. Remove the "ready-for-dev" or "triage" labels if they exist
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue_number,
+                name: 'status: ready-for-dev'
+              });
+            } catch (e) {
+              // Ignore error if the label wasn't there
+            }
+
+            // 3. Post a confirmation comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: `🚀 **OpenCode Agent is on it!** I've created a fix branch: \`opencode/fix-issue-${issue_number}\`. I'll update you once the code is ready for review.`
+            });
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
