@@ -55,7 +55,7 @@ jobs:
           # --obsolete -- ADD THIS LINE to prevent branch creation:
           # ONLY use 'editor' if the comment starts exactly with the fix command
           agent: >
-            ${{ contains(github.event.comment.body, '/opencode-review-pr fix') && 'editor' || '/opencode-review-pr review' }}
+            ${{ contains(github.event.comment.body, 'fix') && 'editor' || 'review' }}
           use_github_token: true
           prompt: 
             "Review this PR for
