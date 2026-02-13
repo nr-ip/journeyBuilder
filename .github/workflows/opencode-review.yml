@@ -16,12 +16,17 @@ permissions:
 
 jobs:
   review:
-  # Ensure this only runs for authorized comments or PR events
+  # UPDATED IF: 
+    # 1. Added check to ensure comments are only processed if they are on a Pull Request.
+    # 2. Added check to ensure only repo Owners or Collaborators can trigger the AI.
     if: |
       (github.event_name == 'pull_request' || 
-      contains(github.event.comment.body, '/opencode-review-pr') || 
-      contains(github.event.comment.body, '/oc-review-pr')) &&
-      github.event.comment.user.type != 'Bot'
+       (github.event.issue.pull_request != null && 
+        (contains(github.event.comment.body, '/opencode-review-pr') || contains(github.event.comment.body, '/oc-review-pr'))
+       )
+      ) &&
+      github.event.comment.user.type != 'Bot' &&
+      (github.event.sender.role_name == 'admin' || github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'COLLABORATOR')
       
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
@@ -35,7 +40,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v5 #Upgraded to V5 (2026) standard
         with:
-          fetch-depth: 0 # AI need full context to understand code
+          fetch-depth: 2 # AI need full context to understand code
           
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
