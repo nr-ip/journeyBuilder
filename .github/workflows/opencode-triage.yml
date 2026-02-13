@@ -8,7 +8,7 @@ jobs:
   # No 'if' check needed here since the 'on' trigger is already specific
   # CHANGE: Added check for 'magic strings' in the issue body
     if: |
-      startsWith(github.event.issue.body, '/opencode') || 
+      startsWith(github.event.issue.body, '/opencode-analyze') || 
       startsWith(github.event.issue.body, '/analyze') ||
       github.event.issue.author_association == 'OWNER' 
       
