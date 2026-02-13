@@ -1,18 +1,21 @@
 name: OpenCode Triage
 on:
   issues:
-    types: [opened] # This file strictly handles new issues and analyze the request
+    types: [opened]
+  issue_comment: 
+    types:  [created] # This file strictly handles new issues created or if the comment is added with the 'if' condition and analyze the request
 
 jobs:
   triage:
   # No 'if' check needed here since the 'on' trigger is already specific
-  # CHANGE: Added check for 'magic strings' in the issue body, i.e. Issue description starts with:
+  # CHANGE: Added check for 'magic strings' in the issue body, i.e. Issue description or comment 'contains'
+  #   ---- github.event.issue.author_association == 'OWNER' ||--  removed since this bypass the other condition and execute becaue I am the owner.
     if: |
-      startsWith(github.event.issue.body, '/opencode-analyze') || 
-      startsWith(github.event.issue.body, '/analyze-issue') ||
-      github.event.issue.author_association == 'OWNER' 
+      contains(github.event.issue.body || github.event.comment.body, '/opencode-analyze') || 
+      contains(github.event.issue.body || github.event.comment.body, '/analyze-issue')
+      
     
-    #Only execute when issue are opened. Thus removed permissiones related to any other actions.   
+    # Only execute when issue are opened. Thus removed permissiones related to any other actions.   
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       issues: 'write'        # Required to comment on issues
