@@ -11,12 +11,12 @@ jobs:
       startsWith(github.event.issue.body, '/opencode-analyze') || 
       startsWith(github.event.issue.body, '/analyze-issue') ||
       github.event.issue.author_association == 'OWNER' 
-      
+    
+    #Only execute when issue are opened. Thus removed permissiones related to any other actions.   
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
-      contents: 'write'      # Required to push code/branches
-      pull-requests: 'write' # Required to open/comment on PRs
       issues: 'write'        # Required to comment on issues
+      
     runs-on: ubuntu-latest
     steps:
       # CHANGE 1: Explicitly point to the default branch (main) 
