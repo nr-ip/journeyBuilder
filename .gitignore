@@ -41,3 +41,9 @@ journey-builder
 
 # Ignore temporary Google Cloud credentials
 gha-creds-*.json
+
+# Ignore the .agent directory
+.agent
+.cursor
+.golangci.yml
+AGENTS.md
