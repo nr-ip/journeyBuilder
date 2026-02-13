@@ -72,7 +72,10 @@ func main() {
 
 	// Initialize orchestrator
 	orch := orchestrator.NewOrchestrator(geminiService, kb, inputValidator, outputValidator)
-	handlers.SetOrchestrator(orch)
+
+	// Create a new APIHandler instance and inject the orchestrator
+	apiHandler := handlers.NewAPIHandler(orch)
+
 	setupGracefulShutdown(geminiService)
 
 	router := mux.NewRouter()
@@ -81,16 +84,18 @@ func main() {
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok","service":"journey-builder"}`))
+		if _, err := w.Write([]byte(`{"status":"ok","service":"journey-builder"}`)); err != nil {
+			logger.Printf("Error writing health check response: %v", err)
+		}
 	}).Methods("GET")
 
 	// API routes
-	router.HandleFunc("/api/chat", handlers.HandleChat).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/generate-journey", handlers.HandleGenerateJourney).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/preview-journey", handlers.HandlePreviewJourney).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/update-delays", handlers.HandleUpdateDelays).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/confirm-journey", handlers.HandleConfirmJourney).Methods("POST", "OPTIONS")
-	router.HandleFunc("/api/generate-step", handlers.HandleGenerateStep).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/chat", apiHandler.HandleChat).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/generate-journey", apiHandler.HandleGenerateJourney).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/preview-journey", apiHandler.HandlePreviewJourney).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/update-delays", apiHandler.HandleUpdateDelays).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/confirm-journey", apiHandler.HandleConfirmJourney).Methods("POST", "OPTIONS")
+	router.HandleFunc("/api/generate-step", apiHandler.HandleGenerateStep).Methods("POST", "OPTIONS")
 
 	// Serve static files from public directory (must be last to catch all other routes)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
