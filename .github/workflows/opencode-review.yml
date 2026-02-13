@@ -20,7 +20,8 @@ jobs:
     if: |
       github.event_name == 'pull_request' || 
       contains(github.event.comment.body, '/opencode-review-pr') || 
-      contains(github.event.comment.body, '/oc-review-pr')
+      contains(github.event.comment.body, '/oc-review-pr') &&
+      github.event.comment.user.type != 'Bot'
       
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
@@ -54,8 +55,7 @@ jobs:
           # --obsolete -- ADD THIS LINE to prevent branch creation:
           # ONLY use 'editor' if the comment starts exactly with the fix command
           agent: >
-            ${{ contains(github.event.comment.body, '/opencode-review-pr review') && 'review' ||
-            contains(github.event.comment.body, 'opencode-review-pr fix') && 'editor' }}
+            ${{ contains(github.event.comment.body, 'fix') && 'editor' || 'review' }}
           use_github_token: true
           prompt: 
             "Review this PR for
