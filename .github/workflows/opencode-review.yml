@@ -66,7 +66,7 @@ jobs:
             "Review this PR for
             1. Security issues, logic flaws, and code style.
             2. Logic flaws and edge cases
-            3. Adherence to project @StyleGuide.md(if exists)
+            3. Adherence to project @docs/StyleGuide.md(if exists)
             Provide specific code suggestions where possible
             "
         env:
