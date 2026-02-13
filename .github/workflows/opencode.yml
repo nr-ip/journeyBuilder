@@ -5,7 +5,7 @@ on:
 
 jobs:
   execute:
-    if: startsWith(github.event.comment.body, '/opencode') || startsWith(github.event.comment.body, '/oc') &&
+    if: (contains(github.event.comment.body, '/opencode-fix') || startsWith(github.event.comment.body, '/oc-fix')) &&
       github.event.comment.user.type != 'Bot'
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
@@ -34,16 +34,21 @@ jobs:
         with:
           model: 'google-vertex/gemini-2.5-pro' # Upgrade to Pro for actual coding
           # DYNAMIC AGENT MODE:
-          # /oc fix -> editor | /oc plan -> plan | /oc review -> review
+          ## Switch mode based on the keyword used in your comment
+          # /oc-fix fix -> editor | /oc-fix plan -> plan | /oc-fix review -> review
           agent: >
-            ${{ contains(github.event.comment.body, 'fix') && 'editor' || 
-                contains(github.event.comment.body, 'plan') && 'plan' || 'review' }}
+            ${{ contains(github.event.comment.body, 'fix') && 'editor' ||
+                contains(github.event.comment.body, 'plan') && 'plan' || 
+                contains(github.event.comment.body, 'review') && 'review' }}
           use_github_token: true
           branch_name: 'opencode/fix-issue-${{ github.event.issue.number }}'
           # Value Add: Pass the actual user comment as the specific instruction
+          create_pull_request: true # Automatically open PR for your review.
           prompt: |
             User Command: "${{ github.event.comment.body }}"
             Context: Resolve the parent issue using the instructions provided in the command.
+            Instruction: Analyze the issue context and implement the requested changes.
+            Strictly follow the Senior Engineer rules in AGENTS.md.
 
       - name: Update Issue Status
         if: success() # Only run if the AI successfully processed the command
