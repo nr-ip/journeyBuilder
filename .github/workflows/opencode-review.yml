@@ -3,7 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review]
   issue_comment:
-    types: [created] # Allows triggering fixes via "/opencode fix"
+    types: [created] # Allows triggering fixes via <see below>
 
 # Prevent multiple AI runs on the same PR to save on GCP costs
 concurrency:
@@ -19,8 +19,8 @@ jobs:
   # Ensure this only runs for authorized comments or PR events
     if: |
       github.event_name == 'pull_request' || 
-      contains(github.event.comment.body, '/opencode') || 
-      contains(github.event.comment.body, '/oc')
+      contains(github.event.comment.body, '/opencode-review-pr') || 
+      contains(github.event.comment.body, '/oc-review-pr')
       
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
@@ -54,7 +54,8 @@ jobs:
           # --obsolete -- ADD THIS LINE to prevent branch creation:
           # ONLY use 'editor' if the comment starts exactly with the fix command
           agent: >
-            ${{ startsWith(github.event.comment.body, '/opencode fix') && 'editor' || 'review' }}
+            ${{ contains(github.event.comment.body, '/opencode-review-pr review') && 'review' ||
+            contains(github.event.comment.body, 'opencode-review-pr fix') && 'editor' }}
           use_github_token: true
           prompt: 
             "Review this PR for
