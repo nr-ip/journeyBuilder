@@ -1,12 +1,12 @@
 name: OpenCode Triage
 on:
   issues:
-    types: [opened] # This file strictly handles new issues
+    types: [opened] # This file strictly handles new issues and analyze the request
 
 jobs:
   triage:
   # No 'if' check needed here since the 'on' trigger is already specific
-  # CHANGE: Added check for 'magic strings' in the issue body
+  # CHANGE: Added check for 'magic strings' in the issue body, i.e. Issue description starts with:
     if: |
       startsWith(github.event.issue.body, '/opencode-analyze') || 
       startsWith(github.event.issue.body, '/analyze-issue') ||
