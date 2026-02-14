@@ -59,6 +59,7 @@ jobs:
           use_github_token: true
           branch_name: 'opencode/fix-issue-${{ github.event.issue.number }}'
           # Value Add: Pass the actual user comment as the specific instruction
+          share: true
           create_pull_request: true # Automatically open PR for your review.
           prompt: |
             User Command: "${{ github.event.comment.body }}"
