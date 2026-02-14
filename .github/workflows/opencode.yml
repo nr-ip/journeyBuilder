@@ -3,6 +3,11 @@ on:
   issue_comment:
     types: [created]
 
+# Prevent multiple builds on the same issue/PR simultaneously
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false # Set to false for commands to avoid killing a running build
+  
 jobs:
   execute:
     if: (contains(github.event.comment.body, '/opencode-fix') || startsWith(github.event.comment.body, '/oc-fix')) &&
