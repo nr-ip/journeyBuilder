@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"JourneyBuilder/internal/logger"
 	"JourneyBuilder/internal/models"
 	"JourneyBuilder/internal/orchestrator"
 )
@@ -25,7 +26,9 @@ func (h *ChatHandler) Health(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		logger.Printf("Error encoding health response: %v", err)
+	}
 }
 
 // Chat handles non-streaming chat requests: POST /api/chat
@@ -39,9 +42,11 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"error": "invalid request body",
-		})
+		}); err != nil {
+			logger.Printf("Error encoding error response: %v", err)
+		}
 		return
 	}
 
@@ -49,16 +54,20 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"error":   "failed to process request",
 			"details": err.Error(),
-		})
+		}); err != nil {
+			logger.Printf("Error encoding error response: %v", err)
+		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		logger.Printf("Error encoding chat response: %v", err)
+	}
 }
 
 // ChatStream handles streaming chat: POST /api/chat/stream

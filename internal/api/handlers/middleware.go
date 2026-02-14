@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+type contextKey string
+
+const requestIDKey contextKey = "requestID"
+
 // Middleware provides HTTP middleware for the Da Vinci API.
 type Middleware struct {
 	logger Logger
@@ -49,7 +53,7 @@ func (m *Middleware) RequestLogger() func(http.Handler) http.Handler {
 			reqID := hex.EncodeToString(reqIDBytes)
 
 			// Store request ID in context
-			ctx := context.WithValue(r.Context(), "requestID", reqID)
+			ctx := context.WithValue(r.Context(), requestIDKey, reqID)
 			r = r.WithContext(ctx)
 
 			// Get client IP

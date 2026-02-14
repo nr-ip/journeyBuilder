@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"JourneyBuilder/internal/api/handlers"
+	"JourneyBuilder/internal/logger"
 	"JourneyBuilder/internal/orchestrator"
 
 	"github.com/gorilla/mux"
@@ -35,18 +36,20 @@ func SetupRoutes(router *mux.Router, orch *orchestrator.Orchestrator) {
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	if err := json.NewEncoder(w).Encode(map[string]string{
 		"status":  "ok",
 		"service": "davinci-chatbot",
 		"version": "1.0.0",
-	})
+	}); err != nil {
+		logger.Printf("Error encoding health check response: %v", err)
+	}
 }
 
 // Status endpoint with orchestrator health.
 func statusCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":     "healthy",
 		"service":    "davinci-chatbot",
 		"version":    "1.0.0",
@@ -55,7 +58,9 @@ func statusCheck(w http.ResponseWriter, r *http.Request) {
 		"frameworks": []string{"AIDA", "PAS", "FAB", "BAB", "4Ps", "Hero"},
 		"uptime":     "2h30m",
 		"timestamp":  time.Now().UTC().Format(time.RFC3339),
-	})
+	}); err != nil {
+		logger.Printf("Error encoding status check response: %v", err)
+	}
 }
 
 // Lists available copywriting frameworks (AIDA, PAS, FAB, BAB, 4Ps, Hero)
@@ -66,11 +71,13 @@ func listFrameworks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"frameworks":  frameworks,
 		"count":       len(frameworks),
 		"description": "Available copywriting frameworks for email sequences",
-	})
+	}); err != nil {
+		logger.Printf("Error encoding frameworks response: %v", err)
+	}
 }
 
 // Lists sequences for specific vertical (supplements, coaching, etc.)
@@ -87,10 +94,12 @@ func listSequences(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"vertical":  vertical,
 		"sequences": sequences,
 		"count":     len(sequences),
 		"message":   fmt.Sprintf("Available sequences for %s vertical", vertical),
-	})
+	}); err != nil {
+		logger.Printf("Error encoding sequences response: %v", err)
+	}
 }

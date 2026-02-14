@@ -4,25 +4,29 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"JourneyBuilder/internal/logger"
 	"JourneyBuilder/internal/models"
 	"JourneyBuilder/internal/orchestrator"
 )
 
-var globalOrchestrator *orchestrator.Orchestrator
-
-// SetOrchestrator sets the global orchestrator instance
-func SetOrchestrator(orch *orchestrator.Orchestrator) {
-	globalOrchestrator = orch
+// APIHandler holds dependencies for handlers.
+type APIHandler struct {
+	Orchestrator *orchestrator.Orchestrator
 }
 
-// HandleChat handles chat requests using the global orchestrator
-func HandleChat(w http.ResponseWriter, r *http.Request) {
+// NewAPIHandler creates a new APIHandler with the given orchestrator.
+func NewAPIHandler(orch *orchestrator.Orchestrator) *APIHandler {
+	return &APIHandler{Orchestrator: orch}
+}
+
+// HandleChat handles chat requests using the injected orchestrator.
+func (h *APIHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	if globalOrchestrator == nil {
+	if h.Orchestrator == nil {
 		http.Error(w, "Orchestrator not initialized", http.StatusInternalServerError)
 		return
 	}
@@ -33,18 +37,20 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := globalOrchestrator.ProcessChatRequest(r.Context(), &req, false)
+	resp, err := h.Orchestrator.ProcessChatRequest(r.Context(), &req, false)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		logger.Printf("Error encoding chat response: %v", err)
+	}
 }
 
-// HandleGenerateJourney is a placeholder for journey generation
-func HandleGenerateJourney(w http.ResponseWriter, r *http.Request) {
+// HandleGenerateJourney is a placeholder for journey generation.
+func (h *APIHandler) HandleGenerateJourney(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -52,8 +58,8 @@ func HandleGenerateJourney(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-// HandlePreviewJourney is a placeholder for journey preview
-func HandlePreviewJourney(w http.ResponseWriter, r *http.Request) {
+// HandlePreviewJourney is a placeholder for journey preview.
+func (h *APIHandler) HandlePreviewJourney(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -61,8 +67,8 @@ func HandlePreviewJourney(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-// HandleUpdateDelays is a placeholder for updating delays
-func HandleUpdateDelays(w http.ResponseWriter, r *http.Request) {
+// HandleUpdateDelays is a placeholder for updating delays.
+func (h *APIHandler) HandleUpdateDelays(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -70,8 +76,8 @@ func HandleUpdateDelays(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-// HandleConfirmJourney is a placeholder for journey confirmation
-func HandleConfirmJourney(w http.ResponseWriter, r *http.Request) {
+// HandleConfirmJourney is a placeholder for journey confirmation.
+func (h *APIHandler) HandleConfirmJourney(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -79,8 +85,8 @@ func HandleConfirmJourney(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-// HandleGenerateStep is a placeholder for step generation
-func HandleGenerateStep(w http.ResponseWriter, r *http.Request) {
+// HandleGenerateStep is a placeholder for step generation.
+func (h *APIHandler) HandleGenerateStep(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
