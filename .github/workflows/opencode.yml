@@ -12,12 +12,25 @@ jobs:
   execute:
     if: (contains(github.event.comment.body, '/opencode-fix') || startsWith(github.event.comment.body, '/oc-fix')) &&
       github.event.comment.user.type != 'Bot'
+      
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       contents: 'write'      # Required to push code/branches
       pull-requests: 'write' # Required to open/comment on PRs
       issues: 'write'        # Required to comment on issues
     runs-on: ubuntu-latest
+
+    env:
+        GOOGLE_CLOUD_PROJECT: 'maropost1984'
+        GOOGLE_CLOUD_LOCATION: 'us-central1'
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_AUTHOR_NAME: 'github-actions[bot]'
+        GIT_AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+        GIT_COMMITTER_NAME: 'github-actions[bot]'
+        GIT_COMMITTER_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+
+
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -89,11 +102,4 @@ jobs:
               issue_number: issue_number,
               body: `🚀 **OpenCode Agent is on it!** I've created a fix branch: \`opencode/fix-issue-${issue_number}\`. I'll update you once the code is ready for review.`
             });
-        env:
-          GOOGLE_CLOUD_PROJECT: 'maropost1984'
-          GOOGLE_CLOUD_LOCATION: 'us-central1'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: 'github-actions[bot]'
-          GIT_AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
-          GIT_COMMITTER_NAME: 'github-actions[bot]'
-          GIT_COMMITTER_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
+
