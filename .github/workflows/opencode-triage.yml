@@ -19,6 +19,7 @@ jobs:
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       issues: 'write'        # Required to comment on issues
+      contents: read       # Explicitly setting to read. 
       
     runs-on: ubuntu-latest
     steps:
@@ -49,13 +50,15 @@ jobs:
           # ADD THIS LINE to prevent branch creation:
           agent: 'plan'
           use_github_token: true
-          prompt: "Analyze the repository context and this issue: ${{ github.event.issue.title }}. 
-            Summarize this issue and suggest appropriate GitHub labels. Identify which files in are likely involved"
+          prompt: |
+                    "Analyze the repository context and this issue: ${{ github.event.issue.title }}". 
+                    1. Summarize this issue
+                    2. Suggest appropriate GitHub labels. 
+                    3. Identify which files in are likely involved
+                    DO NOT create any branch or modify any files
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: 'github-actions[bot]'
           GIT_AUTHOR_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
-          GIT_COMMITTER_NAME: 'github-actions[bot]'
-          GIT_COMMITTER_EMAIL: '41898282+github-actions[bot]@users.noreply.github.com'
