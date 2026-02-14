@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/gorilla/mux"
@@ -100,10 +101,21 @@ func main() {
 	// Serve static files from public directory (must be last to catch all other routes)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
+	// Setup CORS with dynamic origins from environment variable
+	corsOriginsStr := os.Getenv("CORS_ALLOWED_ORIGINS")
+	var allowedOrigins []string
+	if corsOriginsStr == "" {
+		logger.Println("Warning: CORS_ALLOWED_ORIGINS environment variable not set. Cross-origin requests will be blocked.")
+		allowedOrigins = []string{} // Default to no origins allowed if not set
+	} else {
+		allowedOrigins = strings.Split(corsOriginsStr, ",")
+		logger.Printf("✓ CORS origins loaded: %v", allowedOrigins)
+	}
+
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // More specific than "*"
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
