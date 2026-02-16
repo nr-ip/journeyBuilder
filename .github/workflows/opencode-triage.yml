@@ -46,15 +46,16 @@ jobs:
       - name: Run OpenCode Agent
         uses: anomalyco/opencode/github@latest
         with:
-          model: 'google-vertex/gemini-2.5-flash'
+          model: 'google-vertex/gemini-2.5-pro'
           # ADD THIS LINE to prevent branch creation:
           agent: 'plan'
           use_github_token: true
           prompt: |
                     "Analyze the repository context and this issue: ${{ github.event.issue.title }}". 
-                    1. Summarize this issue
+                    1. Analyze this issue as Senior Software engineer and Technical architect.
                     2. Suggest appropriate GitHub labels. 
-                    3. Identify which files in are likely involved
+                    3. Provide your analysis and proposed plan to fix.
+                    4. Identify which files in are likely involved.
                     DO NOT create any branch or modify any files
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
