@@ -45,7 +45,7 @@ func main() {
 	// Verify required environment variables
 	//checkRequiredEnvVars()  // check TODO in function definition
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("FRONTEND_PORT")
 	if port == "" {
 		port = "8080"
 	}
@@ -106,7 +106,11 @@ func main() {
 	var allowedOrigins []string
 	if corsOriginsStr == "" {
 		logger.Println("Warning: CORS_ALLOWED_ORIGINS environment variable not set. Cross-origin requests will be blocked.")
-		allowedOrigins = []string{} // Default to no origins allowed if not set
+		allowedOrigins = []string{
+			"https://staging.maropost.com",
+			"https://uat.maropost.com",
+			"https://app.maropost.com", //Defaulting to application links.
+		}
 	} else {
 		allowedOrigins = strings.Split(corsOriginsStr, ",")
 		logger.Printf("✓ CORS origins loaded: %v", allowedOrigins)
@@ -114,7 +118,7 @@ func main() {
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // More specific than "*"
 		AllowCredentials: true,
 	})
