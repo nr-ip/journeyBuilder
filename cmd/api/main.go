@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/gorilla/mux"
@@ -44,7 +45,7 @@ func main() {
 	// Verify required environment variables
 	//checkRequiredEnvVars()  // check TODO in function definition
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("FRONTEND_PORT")
 	if port == "" {
 		port = "8080"
 	}
@@ -100,10 +101,25 @@ func main() {
 	// Serve static files from public directory (must be last to catch all other routes)
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
+	// Setup CORS with dynamic origins from environment variable
+	corsOriginsStr := os.Getenv("CORS_ALLOWED_ORIGINS")
+	var allowedOrigins []string
+	if corsOriginsStr == "" {
+		logger.Println("Warning: CORS_ALLOWED_ORIGINS environment variable not set. Cross-origin requests will be blocked.")
+		allowedOrigins = []string{
+			"https://staging.maropost.com",
+			"https://uat.maropost.com",
+			"https://app.maropost.com", //Defaulting to application links.
+		}
+	} else {
+		allowedOrigins = strings.Split(corsOriginsStr, ",")
+		logger.Printf("✓ CORS origins loaded: %v", allowedOrigins)
+	}
+
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
+		AllowedOrigins:   allowedOrigins,
+		AllowedMethods:   []string{"POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // More specific than "*"
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
