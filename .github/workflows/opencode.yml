@@ -45,6 +45,28 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
+      - name: Fetch Issue Context
+        id: fetch_context
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch the original issue body (Triage output is usually here or in a comment)
+          ISSUE_BODY=$(gh issue view ${{ github.event.issue.number }} --json body --jq '.body')
+          
+          # Fetch the last 5 comments to get the "Triage Agent" output and user discussion
+          COMMENTS=$(gh issue view ${{ github.event.issue.number }} --json comments --jq '.comments[-5:] | map(.body) | join("\n---\n")')
+          
+          # Store them as multiline outputs for the next step
+          {
+            echo "issue_context<<EOF"
+            echo "$ISSUE_BODY"
+            echo "EOF"
+            echo "comment_context<<EOF"
+            echo "$COMMENTS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      
+
       - name: Run OpenCode Agent
         uses: anomalyco/opencode/github@latest
         with:
@@ -62,9 +84,20 @@ jobs:
           share: true
           create_pull_request: true # Automatically open PR for your review.
           prompt: |
+            # CORE INSTRUCTION
             User Command: "${{ github.event.comment.body }}"
+            
+            # PREVIOUS CONTEXT (Triage & Comments)
+            Original Issue:
+            ${{ steps.fetch_context.outputs.issue_context }}
+            
+            Recent Discussion & Triage Analysis:
+            ${{ steps.fetch_context.outputs.comment_context }}
+            
             Context: Resolve the parent issue using the instructions provided in the command.
-            Instruction: Analyze the issue context and implement the requested changes.
+            
+            Instruction: Analyze the issue context.
+            Resolve the issue by combining the latest user command with the architectural plan provided in the Triage analysis above. 
             Strictly follow the Senior Engineer rules in AGENTS.md.
 
       - name: Update Issue Status
