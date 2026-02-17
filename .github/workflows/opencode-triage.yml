@@ -19,7 +19,7 @@ jobs:
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       issues: 'write'        # Required to comment on issues
-      contents: read       # Explicitly setting to read. 
+      contents: 'read'       # Explicitly setting to read. 
       
     runs-on: ubuntu-latest
     steps:
