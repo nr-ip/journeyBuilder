@@ -12,8 +12,8 @@ jobs:
   execute:
     if: |
           github.event.issue.pull_request == null && 
-          (contains(github.event.comment.body, '/opencode-fix') || 
-          startsWith(github.event.comment.body, '/oc-fix')) &&
+          (contains(github.event.comment.body, '/opencodeFix') || 
+          startsWith(github.event.comment.body, '/ocFix')) &&
           github.event.comment.user.type != 'Bot'
       
     permissions:
