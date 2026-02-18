@@ -10,7 +10,7 @@ concurrency:
   
 jobs:
   execute:
-    if: (contains(github.event.comment.body, '/opencode-fix') || startsWith(github.event.comment.body, '/oc-fix')) &&
+    if: (contains(github.event.comment.body, '/opencode-fix') || contains(github.event.comment.body, '/oc-fix')) &&
       github.event.comment.user.type != 'Bot'
       
     permissions:
