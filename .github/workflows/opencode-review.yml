@@ -20,14 +20,18 @@ jobs:
     # 1. Added check to ensure comments are only processed if they are on a Pull Request.
     # 2. Added check to ensure only repo Owners or Collaborators can trigger the AI.
     if: |
-      (github.event_name == 'pull_request' || 
-       (github.event.issue.pull_request != null && 
-        (contains(github.event.comment.body, '/opencode-review-pr') || contains(github.event.comment.body, '/oc-review-pr'))
-       )
+      (
+        github.event_name == 'pull_request' ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request != null &&
+        (contains(github.event.comment.body, '/opencode-review-pr') || 
+          contains(github.event.comment.body, '/oc-review-pr'))
+        )
       ) &&
-      github.event.comment.user.type != 'Bot' &&
-      (github.event.sender.role_name == 'admin' || github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'COLLABORATOR')
-      
+        (github.event.comment == null || github.event.comment.user.type != 'Bot') &&
+        (github.event.sender.role_name == 'admin' || github.event.sender.login == github.repository_owner 
+        || github.event.comment.author_association == 'OWNER' || 
+        github.event.comment.author_association == 'COLLABORATOR')
+        
     permissions:
       id-token: 'write'      # Required for Google Cloud handshake
       contents: 'write'      # Required to push code/branches
