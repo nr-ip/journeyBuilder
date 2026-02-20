@@ -69,10 +69,10 @@ jobs:
           prompt: >
             ${{ (github.event_name == 'issue_comment' && github.event.comment.body) || 'Standard automated PR review request.' }}
             "Review this PR for
-            1. Security issues, logic flaws, and code style.
-            2. Logic flaws and edge cases
-            3. Adherence to project @docs/StyleGuide.md(if exists)
-            Provide specific code suggestions where possible
+            1. Security & Data Integrity: Identify OWASP vulnerabilities and race conditions.
+            2. Logic & Edge Cases: Focus on boundary conditions and unexpected input types.
+            3. Architectural Alignment: Ensure adherence to @docs/StyleGuide.md and @docs/Architecture.md(if exists)
+            Output Requirement: Provide 'Actionable Suggestions' using GitHub's multi-line suggestion format where possible.
             "
         env:
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
