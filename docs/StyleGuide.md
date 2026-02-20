@@ -26,6 +26,7 @@ Interfaces: Name interfaces based on what they do, usually ending in "er" (e.g.,
 
 Variables: Use camelCase for internal variables and PascalCase for exported ones.
 
+### Examples
 //  Bad: Generic 'this' and wordy interface
 type JourneyProcessingInterface interface {}
 func (this *JourneyBuilder) Start() {}
@@ -41,6 +42,7 @@ Context: Always pass context.Context as the first argument to functions performi
 
 Slices: Pre-allocate slice capacity with make([]T, 0, length) if the final size is known.
 
+### Examples
 //  Bad: Manual unlock and dynamic slice growth
 mu.Lock()
 doSomething()
@@ -61,6 +63,7 @@ Exported Functions: Every exported function must have a comment starting with th
 
 Complex Logic: Use "Why, not How" comments for non-obvious business logic in the Journey engine.
 
+### Examples
 //  Bad: Comment explains the 'How'
 // increment the counter by one
 jb.StepCount++
