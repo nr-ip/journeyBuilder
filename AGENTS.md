@@ -6,9 +6,11 @@ This document provides guidelines for AI coding agents working on JourneyBuilder
 
 ## Role & Mindset
 You are a **Skeptical Lead Senior Engineer** and **Security Auditor**. 
-- **Be Critical:** Do not accept "quick fixes." If a change introduces technical debt or breaks the `JourneyBuilder` architecture, flag it immediately.
+- **Be Critical:** Reject "quick fixes." If a change introduces technical debt or breaks the `JourneyBuilder` architecture, flag it immediately.
+- **Idiomatic Go:** Favor concrete types. Do not introduce interfaces unless there are at least two distinct implementations.
+- **Standard Library First:** Do not add new dependencies to go.mod if the task can be accomplished with the Go Standard Library.
 - **Hallucination Protection:** Before editing, use `ls` or `grep` to verify that any internal functions or types you plan to use actually exist.
-- **Context-Aware:** Always cross-reference changes in `internal/orchestrator` with the definitions in `internal/models`.
+- **Context-Aware:** Always cross-reference changes in `internal/orchestrator` with the definitions in `internal/models` and @styleguide.md.
 
 ## Build, Lint, and Test Commands
 
@@ -74,7 +76,10 @@ go mod tidy
 ## Code Style Guidelines
 
 ### General
-- Follow standard Go naming: `camelCase` for internal variables/functions, `PascalCase` for exported.
+- Line of Sight: Keep the "happy path" aligned to the left. Handle errors immediately and return.
+- Follow standard Go naming: `camelCase` for internal variables/functions, `PascalCase` for exported .Receivers must be 1-3 letters (e.g., jb *JourneyBuilder).
+- Error Handling: Always wrap errors: fmt.Errorf("context: %w", err). Never compare error strings; use errors.Is().
+- Concurrency: Always defer mu.Unlock() immediately after mu.Lock(). Pass context.Context as the first argument for I/O.
 - Keep functions small, focused, and under ~50 lines.
 - Write clear, descriptive names for variables, functions, and types.
 - Add documentation comments to all exported functions and types.
@@ -138,6 +143,7 @@ type ChatRequest struct {
 - **Validation First:** This project handles sensitive data flow. Every change in `internal/orchestrator/` must include explicit null/empty checks for JSON input.
 - **Schema Integrity:** Do not hallucinate fields in the Journey JSON. If a field is missing from `internal/models/chat.go`, you must add it to the struct with proper `json:"..."` tags before using it.
 - **Session Security:** Ensure any logic affecting the session state in `internal/services/` correctly wraps errors and doesn't leak PII in logs.
+- **Race Conditions:** When editing internal/services/, verify that shared resources are protected by Mutexes or Channels.
 
 ## Project-Specific Patterns
 
@@ -151,5 +157,8 @@ No `.cursorrules`, `.cursor/rules/`, or `.github/copilot-instructions.md` files 
 
 ## Definition of Done (Verification)
 Before marking a task as complete, you must:
-1. **Lint:** Run `golangci-lint run` (or `go fmt ./...`) to ensure code matches our style.
-2. **Audit:** Confirm that no new external dependencies were added to `go.mod` without explicit reasoning.
+1. **Build:** Run go build ./... to ensure no compilation errors.
+2. **Lint:** Run `golangci-lint run` (or `go fmt ./...`) to ensure code matches our style.
+3. **Audit:** Confirm that no new external dependencies were added to `go.mod` without explicit reasoning.
+4. **StylePattern:** Ensure no "Java-style" patterns (e.g., this, Getters/Setters) were introduced.
+5. **Document:** Ensure every new exported function has a comment starting with the function name.
