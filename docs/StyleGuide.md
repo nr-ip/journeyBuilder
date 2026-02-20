@@ -6,8 +6,8 @@ Checking: Use errors.Is() or errors.As() for error comparisons; never compare er
 Return Early: Use the "Line of Sight" principle. Handle errors immediately and return, keeping the "happy path" aligned to the left.
 
 ### Examples
-Bad: if err.Error() == "connection failed"
-Good: if errors.Is(err, ErrConnectionFailed)
+❌ Bad: if err.Error() == "connection failed"
+✅ Good: if errors.Is(err, ErrConnectionFailed)
 
 2. Naming Conventions
 Receivers: Use short, 1-3 letter abbreviations (e.g., func (jb *JourneyBuilder) ... rather than func (this *JourneyBuilder) ...).
