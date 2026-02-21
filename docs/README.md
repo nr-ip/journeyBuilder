@@ -11,7 +11,7 @@
 ```bash
 # 1. Clone & Setup
 mkdir davinci-chatbot && cd davinci-chatbot
-# Copy all 35 files from docs/DIRECTORYTREE.txt structure
+# Copy all 35 files from docs/DIRECTORYTREE.txt structure.
 
 # 2. Dependencies
 go mod tidy
