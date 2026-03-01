@@ -61,12 +61,12 @@ jobs:
           
           # Store them as multiline outputs for the next step
           {
-            echo "issue_context<<EOF"
+            echo "issue_context<<'EOF'"
             echo "$ISSUE_BODY"
-            echo "EOF"
-            echo "comment_context<<EOF"
+            echo "'EOF'"
+            echo "comment_context<<'EOF'"
             echo "$COMMENTS"
-            echo "EOF"
+            echo "'EOF'"
           } >> "$GITHUB_OUTPUT"
       
 
