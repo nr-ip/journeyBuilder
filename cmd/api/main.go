@@ -77,8 +77,6 @@ func main() {
 	// Create a new APIHandler instance and inject the orchestrator
 	apiHandler := handlers.NewAPIHandler(orch)
 
-	setupGracefulShutdown(geminiService)
-
 	router := mux.NewRouter()
 
 	// Health check endpoint
@@ -113,23 +111,37 @@ func main() {
 		}
 	} else {
 		allowedOrigins = strings.Split(corsOriginsStr, ",")
-		logger.Printf("✓ CORS origins loaded: %v", allowedOrigins)
+		logger.Printf("CORS origins loaded: %v", allowedOrigins)
 	}
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // More specific than "*"
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
-	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	logger.Printf("🚀 Server starting on port %s", port)
-	logger.Printf("📱 Open http://localhost:%s in your browser", port)
-	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatal(err)
-	}
+
+	// --- Graceful Shutdown ---
+	// Create a channel to listen for OS signals
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	// Start the server in a goroutine
+	go func() {
+		logger.Println("----------------------------------------")
+		logger.Printf("Server starting on port %s", port)
+		logger.Printf("Open http://localhost:%s in your browser", port)
+		logger.Println("----------------------------------------")
+		if err := http.ListenAndServe(":"+port, handler); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Could not start server: %v", err)
+		}
+	}()
+
+	// Block main goroutine until a signal is received
+	<-shutdown
+	logger.Println("Shutting down gracefully...")
+	// Defers for logger and geminiService will now be called
 }
 
 // TODO: Will optimize this later. Probably moved to gemini.go
@@ -148,12 +160,12 @@ func main() {
 // 			if len(value) > 4 {
 // 				masked = value[:4] + "..."
 // 			}
-// 			log.Printf("✓ Found %s: %s", key, masked)
+// 			log.Printf("Found %s: %s", key, masked)
 // 		}
 // 	}
 
 // 	if len(missing) > 0 {
-// 		log.Printf("⚠️  Missing required environment variables: %v", missing)
+// 		log.Printf("Missing required environment variables: %v", missing)
 // 		log.Println("   Set them in your .env file or system environment:")
 // 		for _, key := range missing {
 // 			log.Printf("   export %s=your_value_here", key)
@@ -169,23 +181,9 @@ func main() {
 // 	for key, defaultValue := range optional {
 // 		value := os.Getenv(key)
 // 		if value == "" {
-// 			log.Printf("ℹ️  %s: %s", key, defaultValue)
+// 			log.Printf("%s: %s", key, defaultValue)
 // 		} else {
-// 			log.Printf("✓ Found %s: %s", key, value)
+// 			log.Printf("Found %s: %s", key, value)
 // 		}
 // 	}
 // }
-
-func setupGracefulShutdown(geminiService *services.GeminiService) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		logger.Println("\n🛑 Shutting down gracefully...")
-		if err := geminiService.Close(); err != nil {
-			logger.Printf("Error closing Gemini service: %v", err)
-		}
-		log.Println("✓ Cleanup complete")
-		os.Exit(0)
-	}()
-}
