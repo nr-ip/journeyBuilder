@@ -47,6 +47,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: Dump GitHub Context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+     
       - name: Checkout Code
         uses: actions/checkout@v5 #Upgraded to V5 (2026) standard
         with:
