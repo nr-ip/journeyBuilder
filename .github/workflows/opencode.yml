@@ -103,13 +103,13 @@ jobs:
                 contains(github.event.inputs.command || github.event.comment.body, 'plan') && 'plan' || 
                 contains(github.event.inputs.command || github.event.comment.body, 'review') && 'review' }}
           use_github_token: true
-          branch_name: 'opencode/fix-issue-${{ github.event.inputs.issue_number || github.event.issue.number }}'
+          ##branch_name: 'opencode/fix-issue-${{ github.event.inputs.issue_number || github.event.issue.number }}'
           # Value Add: Pass the actual user comment as the specific instruction
           share: true
-          create_pull_request: true # Automatically open PR for your review.
+          ##create_pull_request: true # Automatically open PR for your review.
           prompt: |
             # CORE INSTRUCTION
-            User Command: "${{ github.event.comment.body }}"
+            User Command: "${{ github.event.comment.body || github.event.inputs.command }}"
             
             # PREVIOUS CONTEXT (Triage & Comments)
             Original Issue:
@@ -123,6 +123,10 @@ jobs:
             Instruction: Analyze the issue context.
             Resolve the issue by combining the latest user command with the architectural plan provided in the Triage analysis above. 
             Strictly follow the Senior Engineer rules in AGENTS.md.
+        env:
+            # Move 'UNEXPECTED' INPUTS HERE
+            OPENCODE_BRANCH_NAME: 'opencode/fix-issue-${{ github.event.inputs.issue_number || github.event.issue.number }}'
+            OPENCODE_CREATE_PR: 'true'
 
       - name: Update Issue Status
         if: success() # Only run if the AI successfully processed the command
