@@ -7,7 +7,7 @@ import (
 	"JourneyBuilder/internal/orchestrator"
 	"JourneyBuilder/internal/services"
 	"JourneyBuilder/internal/validation"
-
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -56,7 +57,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Gemini service: %v", err)
 	}
-	defer geminiService.Close()
 
 	// Initialize knowledge base
 	frameworksPath := filepath.Join("data", "knowledge", "frameworks.json")
@@ -76,8 +76,6 @@ func main() {
 
 	// Create a new APIHandler instance and inject the orchestrator
 	apiHandler := handlers.NewAPIHandler(orch)
-
-	setupGracefulShutdown(geminiService)
 
 	router := mux.NewRouter()
 
@@ -123,11 +121,19 @@ func main() {
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
+
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: handler,
+	}
+
+	setupGracefulShutdown(server, geminiService)
+
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	logger.Printf("🚀 Server starting on port %s", port)
 	logger.Printf("📱 Open http://localhost:%s in your browser", port)
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
@@ -176,16 +182,26 @@ func main() {
 // 	}
 // }
 
-func setupGracefulShutdown(geminiService *services.GeminiService) {
+func setupGracefulShutdown(server *http.Server, geminiService *services.GeminiService) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
 	go func() {
 		<-c
 		logger.Println("\n🛑 Shutting down gracefully...")
+
+		// Create a context with a timeout to allow for existing connections to close.
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
 		if err := geminiService.Close(); err != nil {
 			logger.Printf("Error closing Gemini service: %v", err)
 		}
+
+		if err := server.Shutdown(ctx); err != nil {
+			logger.Fatalf("Server Shutdown Failed:%+v", err)
+		}
+
 		log.Println("✓ Cleanup complete")
-		os.Exit(0)
 	}()
 }
