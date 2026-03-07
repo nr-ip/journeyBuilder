@@ -13,6 +13,11 @@ on:
         description: 'The command (e.g., /ocFix fix)'
         required: true
         default: '/ocFix fix'
+      base_branch:
+        description: 'The clean branch to start the fix from (e.g., main)'
+        required: true
+        default: 'main'
+        type: string
 
 # Prevent multiple builds on the same issue/PR simultaneously
 concurrency:
@@ -48,6 +53,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
+          # Priority: Manual Input > Branch that triggered the action > Default (main)
+          ref: ${{ github.event.inputs.base_branch || github.ref || 'main' }}
           fetch-depth: 0
       - name: Authenticate to Google Cloud 
         uses: google-github-actions/auth@v2
