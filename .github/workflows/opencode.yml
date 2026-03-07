@@ -129,7 +129,7 @@ jobs:
             Strictly follow the Senior Engineer rules in AGENTS.md.
         env:
             # Move 'UNEXPECTED' INPUTS HERE
-            OPENCODE_BRANCH_NAME: 'opencode/fix-issue-${{ github.event.inputs.issue_number || github.event.issue.number }}'
+            OPENCODE_BRANCH_NAME: 'opencode/fix-issue-${{ steps.fetch_context.outputs.ISSUE_NUM }}'
             OPENCODE_CREATE_PR: 'true'
             OPENCODE_PR_BODY: 'Fixes #${{ steps.fetch_context.outputs.ISSUE_NUM }}'
 
