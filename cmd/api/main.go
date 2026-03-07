@@ -77,9 +77,16 @@ func main() {
 	// Create a new APIHandler instance and inject the orchestrator
 	apiHandler := handlers.NewAPIHandler(orch)
 
-	setupGracefulShutdown(geminiService)
-
+	// --- Server Setup ---
 	router := mux.NewRouter()
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: router,
+	}
+
+	// Channel to listen for shutdown signal
+	done := make(chan bool)
+	go setupGracefulShutdown(server, geminiService, done)
 
 	// Health check endpoint
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -123,13 +130,21 @@ func main() {
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
+	server.Handler = handler // Set the CORS handler
+
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	logger.Printf("🚀 Server starting on port %s", port)
 	logger.Printf("📱 Open http://localhost:%s in your browser", port)
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatal(err)
+
+	// Start the server
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logger.Fatalf("Could not listen on %s: %v", port, err)
 	}
+
+	// Wait for graceful shutdown to complete
+	<-done
+	logger.Println("✓ Server gracefully stopped")
 }
 
 // TODO: Will optimize this later. Probably moved to gemini.go
@@ -176,16 +191,19 @@ func main() {
 // 	}
 // }
 
-func setupGracefulShutdown(geminiService *services.GeminiService) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+func setupGracefulShutdown(server *http.Server, geminiService *services.GeminiService, done chan<- bool) {
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-c
+		<-sigc
 		logger.Println("\n🛑 Shutting down gracefully...")
+
+		// Close other services
 		if err := geminiService.Close(); err != nil {
 			logger.Printf("Error closing Gemini service: %v", err)
 		}
-		log.Println("✓ Cleanup complete")
-		os.Exit(0)
+
+		logger.Println("✓ Cleanup complete")
+		done <- true
 	}()
 }
