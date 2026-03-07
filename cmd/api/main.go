@@ -7,7 +7,7 @@ import (
 	"JourneyBuilder/internal/orchestrator"
 	"JourneyBuilder/internal/services"
 	"JourneyBuilder/internal/validation"
-
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -77,8 +78,6 @@ func main() {
 	// Create a new APIHandler instance and inject the orchestrator
 	apiHandler := handlers.NewAPIHandler(orch)
 
-	setupGracefulShutdown(geminiService)
-
 	router := mux.NewRouter()
 
 	// Health check endpoint
@@ -123,13 +122,49 @@ func main() {
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
+
+	server := &http.Server{Addr: ":" + port, Handler: handler}
+
+	// Server run context
+	serverCtx, serverStopCtx := context.WithCancel(context.Background())
+
+	// Listen for syscall signals for process interruption.
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		<-sig
+
+		// Shutdown signal with grace period of 30 seconds
+		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
+		defer cancel()
+
+		go func() {
+			<-shutdownCtx.Done()
+			if shutdownCtx.Err() == context.DeadlineExceeded {
+				log.Fatal("graceful shutdown timed out.. forcing exit.")
+			}
+		}()
+
+		// Trigger graceful shutdown
+		logger.Println("\n🛑 Shutting down gracefully...")
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Fatalf("Server shutdown failed: %v", err)
+		}
+		logger.Println("✓ Cleanup complete")
+		serverStopCtx()
+	}()
+
+	// Run the server
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	logger.Printf("🚀 Server starting on port %s", port)
 	logger.Printf("📱 Open http://localhost:%s in your browser", port)
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatal(err)
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		log.Fatalf("ListenAndServe error: %v", err)
 	}
+
+	// Wait for server context to be stopped
+	<-serverCtx.Done()
 }
 
 // TODO: Will optimize this later. Probably moved to gemini.go
@@ -175,17 +210,3 @@ func main() {
 // 		}
 // 	}
 // }
-
-func setupGracefulShutdown(geminiService *services.GeminiService) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		logger.Println("\n🛑 Shutting down gracefully...")
-		if err := geminiService.Close(); err != nil {
-			logger.Printf("Error closing Gemini service: %v", err)
-		}
-		log.Println("✓ Cleanup complete")
-		os.Exit(0)
-	}()
-}
