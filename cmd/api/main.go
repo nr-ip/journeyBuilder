@@ -8,6 +8,7 @@ import (
 	"JourneyBuilder/internal/services"
 	"JourneyBuilder/internal/validation"
 
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -77,8 +78,6 @@ func main() {
 	// Create a new APIHandler instance and inject the orchestrator
 	apiHandler := handlers.NewAPIHandler(orch)
 
-	setupGracefulShutdown(geminiService)
-
 	router := mux.NewRouter()
 
 	// Health check endpoint
@@ -123,13 +122,37 @@ func main() {
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
+
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: handler,
+	}
+
+	// Graceful shutdown logic
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
+		<-sigint
+
+		// Received an interrupt signal, shut down.
+		logger.Println("\nShutting down gracefully...")
+		if err := srv.Shutdown(context.Background()); err != nil {
+			// Error from closing listeners, or context timeout:
+			logger.Printf("HTTP server Shutdown: %v", err)
+		}
+	}()
+
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	logger.Printf("🚀 Server starting on port %s", port)
 	logger.Printf("📱 Open http://localhost:%s in your browser", port)
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatal(err)
+
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		// Error starting or closing listener:
+		logger.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
+
+	logger.Println("✓ Server shut down successfully")
 }
 
 // TODO: Will optimize this later. Probably moved to gemini.go
@@ -175,17 +198,3 @@ func main() {
 // 		}
 // 	}
 // }
-
-func setupGracefulShutdown(geminiService *services.GeminiService) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		logger.Println("\n🛑 Shutting down gracefully...")
-		if err := geminiService.Close(); err != nil {
-			logger.Printf("Error closing Gemini service: %v", err)
-		}
-		log.Println("✓ Cleanup complete")
-		os.Exit(0)
-	}()
-}
