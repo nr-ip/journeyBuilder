@@ -7,6 +7,7 @@ import (
 	"JourneyBuilder/internal/logger"
 	"JourneyBuilder/internal/models"
 	"JourneyBuilder/internal/orchestrator"
+	"strings"
 )
 
 // ChatHandler wires HTTP layer to the orchestrator.
@@ -44,6 +45,17 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"error": "invalid request body",
+		}); err != nil {
+			logger.Printf("Error encoding error response: %v", err)
+		}
+		return
+	}
+
+	if strings.TrimSpace(req.CurrentMessage) == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": "Missing or empty `currentMessage`",
 		}); err != nil {
 			logger.Printf("Error encoding error response: %v", err)
 		}
@@ -88,6 +100,14 @@ func (h *ChatHandler) ChatStream(w http.ResponseWriter, r *http.Request) {
 	var req models.ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		_, _ = w.Write([]byte("event: error\ndata: invalid request body\n\n"))
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+		return
+	}
+
+	if strings.TrimSpace(req.CurrentMessage) == "" {
+		_, _ = w.Write([]byte("event: error\ndata: Missing or empty `currentMessage`\n\n"))
 		if flusher, ok := w.(http.Flusher); ok {
 			flusher.Flush()
 		}
