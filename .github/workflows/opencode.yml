@@ -75,10 +75,10 @@ jobs:
           ISSUE_NUM: ${{ github.event.inputs.issue_number || github.event.issue.number }}
         run: |
           # Fetch the original issue body (Triage output is usually here or in a comment)
-          ISSUE_BODY=$(gh issue view ${{ github.event.issue.number }} --json body --jq '.body')
+          ISSUE_BODY=$(gh issue view "$ISSUE_NUM" --json body --jq '.body')
           
           # Fetch the last 5 comments to get the "Triage Agent" output and user discussion
-          COMMENTS=$(gh issue view ${{ github.event.issue.number }} --json comments --jq '.comments[-5:] | map(.body) | join("\n---\n")')
+          COMMENTS=$(gh issue view "$ISSUE_NUM" --json comments --jq '.comments[-5:] | map(.body) | join("\n---\n")')
           
           # Store them as multiline outputs for the next step
           {
