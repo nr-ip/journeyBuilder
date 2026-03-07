@@ -1,4 +1,4 @@
-name: OpenCode Triage
+name: OpenCodeTriage
 on:
   issues:
     types: [opened]
