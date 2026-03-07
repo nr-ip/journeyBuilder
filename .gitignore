@@ -48,3 +48,5 @@ gha-creds-*.json
 .golangci.yml
 AGENTS.md
 .DS_STORE
+session-ses*
+opencode*.json
