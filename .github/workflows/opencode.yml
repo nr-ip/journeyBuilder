@@ -108,6 +108,10 @@ jobs:
           share: true
           ##create_pull_request: true # Automatically open PR for your review.
           prompt: |
+            # SYSTEM RULES
+            - Use ONLY this branch name: "opencode/fix-issue-${{ steps.fetch_context.outputs.ISSUE_NUM }}"
+            - When creating the PR, include "Fixes #${{ steps.fetch_context.outputs.ISSUE_NUM }}" in the description.
+            
             # CORE INSTRUCTION
             User Command: "${{ github.event.comment.body || github.event.inputs.command }}"
             
@@ -127,6 +131,7 @@ jobs:
             # Move 'UNEXPECTED' INPUTS HERE
             OPENCODE_BRANCH_NAME: 'opencode/fix-issue-${{ github.event.inputs.issue_number || github.event.issue.number }}'
             OPENCODE_CREATE_PR: 'true'
+            OPENCODE_PR_BODY: 'Fixes #${{ steps.fetch_context.outputs.ISSUE_NUM }}'
 
       - name: Update Issue Status
         if: success() # Only run if the AI successfully processed the command
