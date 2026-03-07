@@ -21,6 +21,48 @@ import (
 	"github.com/rs/cors"
 )
 
+func checkRequiredEnvVars() {
+	required := []string{"GCP_PROJECT_ID", "GCP_REGION", "GEMINI_MODEL"}
+	missing := []string{}
+
+	for _, key := range required {
+		value := os.Getenv(key)
+		if value == "" {
+			missing = append(missing, key)
+		} else {
+			// Mask the value for security (show first 4 chars)
+			masked := value
+			if len(value) > 4 {
+				masked = value[:4] + "..."
+			}
+			log.Printf("✓ Found %s: %s", key, masked)
+		}
+	}
+
+	if len(missing) > 0 {
+		log.Printf("⚠️  Missing required environment variables: %v", missing)
+		log.Println("   Set them in your .env file or system environment:")
+		for _, key := range missing {
+			log.Printf("   export %s=your_value_here", key)
+		}
+	}
+
+	// Check optional variables
+	optional := map[string]string{
+		"GEMINI_MODEL":                   "gemini-1.5-flash (default)",
+		"GOOGLE_APPLICATION_CREDENTIALS": "not set (optional, for Vertex AI)",
+	}
+
+	for key, defaultValue := range optional {
+		value := os.Getenv(key)
+		if value == "" {
+			log.Printf("ℹ️  %s: %s", key, defaultValue)
+		} else {
+			log.Printf("✓ Found %s: %s", key, value)
+		}
+	}
+}
+
 func main() {
 	// Load .env file if it exists (doesn't override existing env vars)
 	if err := godotenv.Load(); err != nil {
@@ -43,7 +85,7 @@ func main() {
 	defer logger.Close()
 
 	// Verify required environment variables
-	//checkRequiredEnvVars()  // check TODO in function definition
+	checkRequiredEnvVars() // check TODO in function definition
 
 	port := os.Getenv("FRONTEND_PORT")
 	if port == "" {
@@ -105,12 +147,7 @@ func main() {
 	corsOriginsStr := os.Getenv("CORS_ALLOWED_ORIGINS")
 	var allowedOrigins []string
 	if corsOriginsStr == "" {
-		logger.Println("Warning: CORS_ALLOWED_ORIGINS environment variable not set. Cross-origin requests will be blocked.")
-		allowedOrigins = []string{
-			"https://staging.maropost.com",
-			"https://uat.maropost.com",
-			"https://app.maropost.com", //Defaulting to application links.
-		}
+		logger.Fatalf("Critical: CORS_ALLOWED_ORIGINS environment variable not set. Halting due to security policy.")
 	} else {
 		allowedOrigins = strings.Split(corsOriginsStr, ",")
 		logger.Printf("✓ CORS origins loaded: %v", allowedOrigins)
