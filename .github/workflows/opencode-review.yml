@@ -4,6 +4,12 @@ on:
     types: [opened, synchronize, ready_for_review]
   issue_comment:
     types: [created] # Allows triggering fixes via <see below>
+  workflow_dispatch: # This allows the OpenCode agent to "see" the trigger
+    inputs:
+      pull_request_number:
+        description: 'PR number to review'
+        required: true
+        type: string
 
 # Prevent multiple AI runs on the same PR to save on GCP costs
 concurrency:
@@ -66,15 +72,18 @@ jobs:
           agent: >
             ${{ (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'fix')) && 'editor' || 'review' }}
           use_github_token: true
-          prompt: >
-            ${{ (github.event_name == 'issue_comment' && github.event.comment.body) || 'Standard automated PR review request.' }}
-            "Review this PR for
+          prompt: |
+            Context: ${{ github.event.pull_request.title || 'Manual Review Request' }}
+            User Instructions: ${{ github.event.comment.body || 'Perform a standard architectural and security review.' }}
+            Review Requirements:
             1. Security & Data Integrity: Identify OWASP vulnerabilities and race conditions.
             2. Logic & Edge Cases: Focus on boundary conditions and unexpected input types.
             3. Architectural Alignment: Ensure adherence to @docs/StyleGuide.md and @docs/Architecture.md(if exists)
-            Output Requirement: Provide 'Actionable Suggestions' using GitHub's multi-line suggestion format where possible.
-            "
+            Output Requirement: Use GitHub multi-line suggestion format (```suggestion) for actionable code changes.
+            
         env:
+          OPENCODE_REVIEW_MODE: 'true'
+          OPENCODE_PULL_REQUEST_NUMBER: "${{ github.event.inputs.pull_request_number || github.event.pull_request.number }}"
           GOOGLE_CLOUD_PROJECT: 'maropost1984'
           GOOGLE_CLOUD_LOCATION: 'us-central1'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
