@@ -74,6 +74,7 @@ jobs:
           # Use either the manual input or the event issue number
           ISSUE_NUM: ${{ github.event.inputs.issue_number || github.event.issue.number }}
         run: |
+          ISSUE_NUM="${{ github.event.inputs.issue_number || github.event.issue.number }}"
           # Fetch the original issue body (Triage output is usually here or in a comment)
           ISSUE_BODY=$(gh issue view "$ISSUE_NUM" --json body --jq '.body')
           
@@ -81,6 +82,7 @@ jobs:
           COMMENTS=$(gh issue view "$ISSUE_NUM" --json comments --jq '.comments[-5:] | map(.body) | join("\n---\n")')
           
           # Store them as multiline outputs for the next step
+          echo "ISSUE_NUM=$ISSUE_NUM" >> "$GITHUB_OUTPUT"
           {
             echo "issue_context<<'EOF'"
             echo "$ISSUE_BODY"
