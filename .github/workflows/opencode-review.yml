@@ -113,7 +113,17 @@ jobs:
             - Summary: A 2-sentence overview of the PR's architectural health.
 
             Strict Constraint: DO NOT create branches or push commits.
-            Output Requirement: Use GitHub multi-line suggestion format (```suggestion) for actionable code changes.
+            
+            OUTPUT INSTRUCTIONS:
+            - DO NOT attempt to run 'gh pr comment' or 'gh api' commands.
+            - Simply state your findings and provide code suggestions in your final response.
+            - For every finding, you MUST specify the filename.
+            - Use the following format for actionable suggestions:
+            
+            In `path/to/file.go`:
+            ```suggestion
+            CODE_HERE
+            ```
             
         env:
           OPENCODE_REVIEW_MODE: 'true'
