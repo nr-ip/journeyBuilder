@@ -56,7 +56,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v5 #Upgraded to V5 (2026) standard
         with:
-          fetch-depth: 2 # AI need full context to understand code
+          fetch-depth: 0 # AI need The entire history of all branches and tags for code analysis.
           
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -82,7 +82,12 @@ jobs:
           prompt: |
             Context: ${{ github.event.pull_request.title || 'Manual Review Request' }}
             User Instructions: ${{ github.event.comment.body || 'Perform a standard architectural and security review.' }}
-            
+
+            Scope Constraint:
+            - Perform an INCREMENTAL review only.
+            - Only analyze and comment on the specific changes provided in the Pull Request diff.
+            - Ignore existing code patterns in the file that were not modified as part of this PR.
+
             Review Requirements:
             1. Security & Data Integrity: Identify OWASP vulnerabilities and race conditions.
             2. Logic & Edge Cases: Focus on boundary conditions and unexpected input types.
