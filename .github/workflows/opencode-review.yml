@@ -93,6 +93,10 @@ jobs:
             2. Logic & Edge Cases: Focus on boundary conditions and unexpected input types.
             3. Architectural Alignment: Ensure adherence to @docs/StyleGuide.md and @docs/Architecture.md(if exists)
 
+            Executive Summary (Post as a top-level comment):
+            - Risk Score: Assign a status of [🟢 LOW], [🟡 MEDIUM], or [🔴 HIGH] based on the severity of found issues.
+            - Summary: A 2-sentence overview of the PR's architectural health.
+
             Strict Constraint: DO NOT create branches or push commits.
             Output Requirement: Use GitHub multi-line suggestion format (```suggestion) for actionable code changes.
             
