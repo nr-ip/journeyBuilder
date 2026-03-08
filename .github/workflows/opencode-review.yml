@@ -93,7 +93,10 @@ jobs:
           ## pull_request_number: ${{ github.event.inputs.pull_request_number || github.event.pull_request.number }}
           prompt: |
             PR_NUMBER: ${{ github.event.inputs.pull_request_number || github.event.pull_request.number }}
-            DIFF_CONTEXT: $(git diff origin/${{ github.event.pull_request.base.ref || 'master' }}...HEAD)
+            ## DIFF_CONTEXT: $(git diff origin/${{ github.event.pull_request.base.ref || 'master' }}...HEAD)
+            
+            PR_DIFF_CONTENT:
+            $(gh pr diff ${{ github.event.inputs.pull_request_number || github.event.pull_request.number }})
             
             Context: ${{ github.event.pull_request.title || 'Manual Review Request' }}
             User Instructions: ${{ github.event.comment.body || 'Perform a standard architectural and security review.' }}
