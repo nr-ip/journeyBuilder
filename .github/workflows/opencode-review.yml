@@ -57,6 +57,16 @@ jobs:
         uses: actions/checkout@v5 #Upgraded to V5 (2026) standard
         with:
           fetch-depth: 0 # AI need The entire history of all branches and tags for code analysis.
+
+      - name: Switch to PR Branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUM: ${{ github.event.inputs.pull_request_number || github.event.pull_request.number }}
+        run: |
+          echo "🎯 Setting context for PR #$PR_NUM"
+          gh pr checkout "$PR_NUM"
+          # This ensures the agent sees the UNMERGED changes
+          git fetch origin ${{ github.event.pull_request.base.ref || 'master' }}
           
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
