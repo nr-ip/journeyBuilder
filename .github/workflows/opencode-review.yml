@@ -129,8 +129,8 @@ jobs:
             Strict Constraint: DO NOT create branches or push commits.
             
             OUTPUT INSTRUCTIONS:
-            - DO NOT attempt to run 'gh pr comment' or 'gh api' commands.
-            - Simply state your findings and provide code suggestions in your final response.
+            - USE the GitHub CLI ONLY with the --body-file flag to post your final review.
+            - Write your entire review (Executive Summary + Findings) into a file named review.md, then run: gh pr comment ${{ github.event.inputs.pull_request_number || github.event.pull_request.number }} --body-file review.md
             - For every finding, you MUST specify the filename.
             - Use the following format for actionable suggestions:
             
