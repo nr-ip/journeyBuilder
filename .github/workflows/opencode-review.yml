@@ -68,6 +68,17 @@ jobs:
           # This ensures the agent sees the UNMERGED changes
           git fetch origin ${{ github.event.pull_request.base.ref || 'master' }}
           
+      - name: Fetch PR Diff
+        id: fetch_diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create a secure, random delimiter for the multi-line diff
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "pr_diff<<$EOF" >> $GITHUB_OUTPUT
+          gh pr diff ${{ github.event.inputs.pull_request_number || github.event.pull_request.number }} >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+          
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -96,7 +107,7 @@ jobs:
             ## DIFF_CONTEXT: $(git diff origin/${{ github.event.pull_request.base.ref || 'master' }}...HEAD)
             
             PR_DIFF_CONTENT:
-            $(gh pr diff ${{ github.event.inputs.pull_request_number || github.event.pull_request.number }})
+            ${{ steps.fetch_diff.outputs.pr_diff }}
             
             Context: ${{ github.event.pull_request.title || 'Manual Review Request' }}
             User Instructions: ${{ github.event.comment.body || 'Perform a standard architectural and security review.' }}
