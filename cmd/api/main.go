@@ -136,23 +136,18 @@ func main() {
 	go func() {
 		<-sig
 
-		// Shutdown signal with grace period of 30 seconds
-		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
+		// Shutdown signal with grace period of 30 seconds.
+		// Use Background() to ensure the shutdown process has its own dedicated window.
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-
-		go func() {
-			<-shutdownCtx.Done()
-			if shutdownCtx.Err() == context.DeadlineExceeded {
-				logger.Println("Warning: Graceful shutdown timed out.. forcing exit.")
-			}
-		}()
 
 		// Trigger graceful shutdown
 		logger.Println("\n🛑 Shutting down gracefully...")
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			logger.Printf("Server shutdown failed: %v", err)
+			logger.Printf("⚠️ Server shutdown error: %v", err)
+		} else {
+			logger.Println("✓ HTTP server stopped successfully")
 		}
-		logger.Println("✓ Cleanup complete")
 		serverStopCtx()
 	}()
 
@@ -168,4 +163,5 @@ func main() {
 
 	// Wait for server context to be stopped
 	<-serverCtx.Done()
+	logger.Println("✓ Process cleanup complete. Exiting.")
 }
