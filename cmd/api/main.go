@@ -7,7 +7,7 @@ import (
 	"JourneyBuilder/internal/orchestrator"
 	"JourneyBuilder/internal/services"
 	"JourneyBuilder/internal/validation"
-
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -54,7 +55,8 @@ func main() {
 	logger.Println("Initializing AI services...")
 	geminiService, err := services.NewGeminiService()
 	if err != nil {
-		log.Fatalf("Failed to initialize Gemini service: %v", err)
+		logger.Printf("Failed to initialize Gemini service: %v", err)
+		return
 	}
 	defer geminiService.Close()
 
@@ -64,7 +66,8 @@ func main() {
 	verticalsPath := filepath.Join("data", "knowledge", "verticals.json")
 	kb, err := knowledge.NewKnowledgeBase(frameworksPath, sequencesPath, verticalsPath)
 	if err != nil {
-		logger.Fatalf("Failed to initialize knowledge base: %v", err)
+		logger.Printf("Failed to initialize knowledge base: %v", err)
+		return
 	}
 
 	// Initialize validation
@@ -76,8 +79,6 @@ func main() {
 
 	// Create a new APIHandler instance and inject the orchestrator
 	apiHandler := handlers.NewAPIHandler(orch)
-
-	setupGracefulShutdown(geminiService)
 
 	router := mux.NewRouter()
 
@@ -123,69 +124,48 @@ func main() {
 		AllowCredentials: true,
 	})
 	handler := c.Handler(router)
+
+	server := &http.Server{Addr: ":" + port, Handler: handler}
+
+	// Server run context
+	serverCtx, serverStopCtx := context.WithCancel(context.Background())
+
+	// Listen for syscall signals for process interruption.
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	go func() {
+		<-sig
+
+		// Shutdown signal with grace period of 30 seconds
+		shutdownCtx, cancel := context.WithTimeout(serverCtx, 30*time.Second)
+		defer cancel()
+
+		go func() {
+			<-shutdownCtx.Done()
+			if shutdownCtx.Err() == context.DeadlineExceeded {
+				logger.Println("Warning: Graceful shutdown timed out.. forcing exit.")
+			}
+		}()
+
+		// Trigger graceful shutdown
+		logger.Println("\n🛑 Shutting down gracefully...")
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			logger.Printf("Server shutdown failed: %v", err)
+		}
+		logger.Println("✓ Cleanup complete")
+		serverStopCtx()
+	}()
+
+	// Run the server
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	logger.Printf("🚀 Server starting on port %s", port)
 	logger.Printf("📱 Open http://localhost:%s in your browser", port)
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatal(err)
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+		logger.Printf("ListenAndServe error: %v", err)
+		serverStopCtx()
 	}
-}
 
-// TODO: Will optimize this later. Probably moved to gemini.go
-// checkRequiredEnvVars verifies that required environment variables are set
-// func checkRequiredEnvVars() {
-// 	required := []string{"GCP_PROJECT_ID", "GCP_REGION", "GEMINI_MODEL"}
-// 	missing := []string{}
-
-// 	for _, key := range required {
-// 		value := os.Getenv(key)
-// 		if value == "" {
-// 			missing = append(missing, key)
-// 		} else {
-// 			// Mask the value for security (show first 4 chars)
-// 			masked := value
-// 			if len(value) > 4 {
-// 				masked = value[:4] + "..."
-// 			}
-// 			log.Printf("✓ Found %s: %s", key, masked)
-// 		}
-// 	}
-
-// 	if len(missing) > 0 {
-// 		log.Printf("⚠️  Missing required environment variables: %v", missing)
-// 		log.Println("   Set them in your .env file or system environment:")
-// 		for _, key := range missing {
-// 			log.Printf("   export %s=your_value_here", key)
-// 		}
-// 	}
-
-// 	// Check optional variables
-// 	optional := map[string]string{
-// 		"GEMINI_MODEL":                   "gemini-2.5-flash (default)",
-// 		"GOOGLE_APPLICATION_CREDENTIALS": "not set (optional, for Vertex AI)",
-// 	}
-
-// 	for key, defaultValue := range optional {
-// 		value := os.Getenv(key)
-// 		if value == "" {
-// 			log.Printf("ℹ️  %s: %s", key, defaultValue)
-// 		} else {
-// 			log.Printf("✓ Found %s: %s", key, value)
-// 		}
-// 	}
-// }
-
-func setupGracefulShutdown(geminiService *services.GeminiService) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		logger.Println("\n🛑 Shutting down gracefully...")
-		if err := geminiService.Close(); err != nil {
-			logger.Printf("Error closing Gemini service: %v", err)
-		}
-		log.Println("✓ Cleanup complete")
-		os.Exit(0)
-	}()
+	// Wait for server context to be stopped
+	<-serverCtx.Done()
 }
