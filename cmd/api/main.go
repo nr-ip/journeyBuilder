@@ -55,7 +55,8 @@ func main() {
 	logger.Println("Initializing AI services...")
 	geminiService, err := services.NewGeminiService()
 	if err != nil {
-		log.Fatalf("Failed to initialize Gemini service: %v", err)
+		logger.Printf("Failed to initialize Gemini service: %v", err)
+		return
 	}
 	defer geminiService.Close()
 
@@ -65,7 +66,8 @@ func main() {
 	verticalsPath := filepath.Join("data", "knowledge", "verticals.json")
 	kb, err := knowledge.NewKnowledgeBase(frameworksPath, sequencesPath, verticalsPath)
 	if err != nil {
-		logger.Fatalf("Failed to initialize knowledge base: %v", err)
+		logger.Printf("Failed to initialize knowledge base: %v", err)
+		return
 	}
 
 	// Initialize validation
@@ -141,14 +143,14 @@ func main() {
 		go func() {
 			<-shutdownCtx.Done()
 			if shutdownCtx.Err() == context.DeadlineExceeded {
-				log.Fatal("graceful shutdown timed out.. forcing exit.")
+				logger.Println("Warning: Graceful shutdown timed out.. forcing exit.")
 			}
 		}()
 
 		// Trigger graceful shutdown
 		logger.Println("\n🛑 Shutting down gracefully...")
 		if err := server.Shutdown(shutdownCtx); err != nil {
-			log.Fatalf("Server shutdown failed: %v", err)
+			logger.Printf("Server shutdown failed: %v", err)
 		}
 		logger.Println("✓ Cleanup complete")
 		serverStopCtx()
@@ -160,53 +162,10 @@ func main() {
 	logger.Printf("📱 Open http://localhost:%s in your browser", port)
 	logger.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		log.Fatalf("ListenAndServe error: %v", err)
+		logger.Printf("ListenAndServe error: %v", err)
+		serverStopCtx()
 	}
 
 	// Wait for server context to be stopped
 	<-serverCtx.Done()
 }
-
-// TODO: Will optimize this later. Probably moved to gemini.go
-// checkRequiredEnvVars verifies that required environment variables are set
-// func checkRequiredEnvVars() {
-// 	required := []string{"GCP_PROJECT_ID", "GCP_REGION", "GEMINI_MODEL"}
-// 	missing := []string{}
-
-// 	for _, key := range required {
-// 		value := os.Getenv(key)
-// 		if value == "" {
-// 			missing = append(missing, key)
-// 		} else {
-// 			// Mask the value for security (show first 4 chars)
-// 			masked := value
-// 			if len(value) > 4 {
-// 				masked = value[:4] + "..."
-// 			}
-// 			log.Printf("✓ Found %s: %s", key, masked)
-// 		}
-// 	}
-
-// 	if len(missing) > 0 {
-// 		log.Printf("⚠️  Missing required environment variables: %v", missing)
-// 		log.Println("   Set them in your .env file or system environment:")
-// 		for _, key := range missing {
-// 			log.Printf("   export %s=your_value_here", key)
-// 		}
-// 	}
-
-// 	// Check optional variables
-// 	optional := map[string]string{
-// 		"GEMINI_MODEL":                   "gemini-2.5-flash (default)",
-// 		"GOOGLE_APPLICATION_CREDENTIALS": "not set (optional, for Vertex AI)",
-// 	}
-
-// 	for key, defaultValue := range optional {
-// 		value := os.Getenv(key)
-// 		if value == "" {
-// 			log.Printf("ℹ️  %s: %s", key, defaultValue)
-// 		} else {
-// 			log.Printf("✓ Found %s: %s", key, value)
-// 		}
-// 	}
-// }
