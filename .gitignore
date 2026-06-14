@@ -48,3 +48,7 @@ gha-creds-*.json
 .golangci.yml
 AGENTS.md
 .DS_STORE
+
+# Ignore Opencode files
+opencode.json
+session-ses_3387.md
