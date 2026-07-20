@@ -1,4 +1,4 @@
-# Da Vinci - AI Email Sequence Creator
+# AI Email Sequence Creator
 
 **Production-ready Golang chatbot** powered by Vertex AI (Gemini 2.5 Flash) for DTC email marketers. Creates high-conversion automated sequences using Buyers' Circles of Trust framework.
 
